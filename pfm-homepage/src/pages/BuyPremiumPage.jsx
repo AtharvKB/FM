@@ -1,7 +1,31 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const BuyPremiumPage = ({ userEmail, onBack, onPaymentSuccess }) => {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [checkingStatus, setCheckingStatus] = useState(true);
+  const [isPremium, setIsPremium] = useState(false);
+
+  // 🆕 Check if user is already premium when page loads
+  useEffect(() => {
+    checkPremiumStatus();
+  }, []);
+
+  const checkPremiumStatus = async () => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/payment/premium-status/${userEmail}`);
+      const data = await response.json();
+      
+      if (data.success && data.isPremium) {
+        setIsPremium(true);
+        alert('You are already a Premium member!');
+        onBack(); // Go back to dashboard
+      }
+    } catch (error) {
+      console.error('Error checking premium status:', error);
+    } finally {
+      setCheckingStatus(false);
+    }
+  };
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
@@ -42,9 +66,8 @@ const BuyPremiumPage = ({ userEmail, onBack, onPaymentSuccess }) => {
 
       console.log('✅ Order created:', orderData.order.id);
 
-      // ⚠️ REPLACE WITH YOUR ACTUAL RAZORPAY KEY ID
       const options = {
-        key: 'rzp_test_RPKOU6Ky0Y8EuF', // 🔥 PUT YOUR KEY HERE
+        key: 'rzp_test_RPKOU6Ky0Y8EuF',
         amount: orderData.order.amount,
         currency: orderData.order.currency,
         name: 'Financial Management',
@@ -97,6 +120,23 @@ const BuyPremiumPage = ({ userEmail, onBack, onPaymentSuccess }) => {
       setIsProcessing(false);
     }
   };
+
+  // 🆕 Show loading while checking premium status
+  if (checkingStatus) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        color: 'white',
+        fontSize: '1.5rem'
+      }}>
+        Checking premium status...
+      </div>
+    );
+  }
 
   return (
     <div style={{

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 
-const Dashboard = ({ userEmail, onLogout }) => {
+const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogout }) => {
   const [financialData, setFinancialData] = useState({
     totalBalance: 0,
     income: 0,
@@ -12,6 +12,10 @@ const Dashboard = ({ userEmail, onLogout }) => {
   const [transactions, setTransactions] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // 🆕 Usage tracking state
+  const [usageInfo, setUsageInfo] = useState(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
   
   // Modal states
   const [showTransactionModal, setShowTransactionModal] = useState(false);
@@ -47,7 +51,6 @@ const Dashboard = ({ userEmail, onLogout }) => {
   
   const [showUserMenu, setShowUserMenu] = useState(false);
 
-  // 🆕 NEW FEATURES STATE
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
@@ -83,6 +86,21 @@ const Dashboard = ({ userEmail, onLogout }) => {
     }, 3000);
   };
 
+  // 🆕 Fetch usage info for free users
+  const fetchUsageInfo = async () => {
+    if (!isPremium) {
+      try {
+        const response = await fetch(`http://localhost:5000/api/usage/${userEmail}`);
+        const data = await response.json();
+        if (data.success) {
+          setUsageInfo(data.usageInfo);
+        }
+      } catch (error) {
+        console.error('Error fetching usage:', error);
+      }
+    }
+  };
+
   const fetchFinancialData = async () => {
     try {
       setIsLoading(true);
@@ -106,14 +124,14 @@ const Dashboard = ({ userEmail, onLogout }) => {
   useEffect(() => {
     if (userEmail) {
       fetchFinancialData();
+      fetchUsageInfo(); // 🆕 Fetch usage on load
       const savedBudgets = localStorage.getItem(`budgets_${userEmail}`);
       if (savedBudgets) {
         setBudgets(JSON.parse(savedBudgets));
       }
     }
-  }, [userEmail]);
+  }, [userEmail, isPremium]);
 
-  // 🆕 FILTER AND SEARCH FUNCTION
   const getFilteredTransactions = () => {
     return transactions.filter(txn => {
       const matchesSearch = txn.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -127,7 +145,6 @@ const Dashboard = ({ userEmail, onLogout }) => {
 
   const filteredTransactions = getFilteredTransactions();
 
-  // 🆕 EXPORT TO CSV
   const exportToCSV = () => {
     setIsExporting(true);
     
@@ -158,7 +175,7 @@ const Dashboard = ({ userEmail, onLogout }) => {
     }, 1000);
   };
 
-  // Handle 3 types of transactions
+  // 🆕 Updated transaction submit with limit check
   const handleTransactionSubmit = async (e) => {
     e.preventDefault();
     
@@ -203,9 +220,18 @@ const Dashboard = ({ userEmail, onLogout }) => {
           setTransactions(prev => [result.transaction, ...prev]);
         }
         
+        // 🆕 Update usage info
+        if (result.usageInfo) {
+          setUsageInfo(result.usageInfo);
+        }
+        
         setTransactionForm({ type: 'expense', amount: '', description: '', category: 'food' });
         setShowTransactionModal(false);
         showToast('Transaction saved successfully! 💰', 'success');
+      } else if (result.isPremiumRequired) {
+        // 🆕 Show limit reached modal
+        setShowLimitModal(true);
+        setShowTransactionModal(false);
       } else {
         showToast('Failed: ' + result.message, 'error');
       }
@@ -215,7 +241,6 @@ const Dashboard = ({ userEmail, onLogout }) => {
     }
   };
 
-  // 🆕 SHOW CONFIRMATION MODAL
   const showConfirmation = (title, message, onConfirm) => {
     setConfirmModal({
       show: true,
@@ -226,7 +251,6 @@ const Dashboard = ({ userEmail, onLogout }) => {
     });
   };
 
-  // 🆕 UPDATED DELETE WITH CONFIRMATION
   const handleDeleteTransaction = (index) => {
     const txn = transactions[index];
     
@@ -283,14 +307,12 @@ const Dashboard = ({ userEmail, onLogout }) => {
     );
   };
 
-  // Handle budget save
   const handleSetBudget = () => {
     localStorage.setItem(`budgets_${userEmail}`, JSON.stringify(budgets));
     showToast('Budgets updated successfully! 🎯', 'success');
     setShowBudgetModal(false);
   };
 
-  // Calculate budget progress
   const calculateBudgetProgress = () => {
     const progress = {};
     Object.keys(budgets).forEach(category => {
@@ -308,7 +330,6 @@ const Dashboard = ({ userEmail, onLogout }) => {
 
   const budgetProgress = calculateBudgetProgress();
 
-  // Calculate analytics from actual data
   const calculateAnalytics = () => {
     if (transactions.length === 0) return null;
 
@@ -352,6 +373,44 @@ const Dashboard = ({ userEmail, onLogout }) => {
         </div>
         
         <div className="nav-actions">
+          {/* 🆕 Premium Badge */}
+          {isPremium && (
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.5rem 1rem',
+              background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+              color: '#78350f',
+              borderRadius: '20px',
+              fontWeight: 600,
+              fontSize: '0.9rem',
+              marginRight: '1rem'
+            }}>
+              <span>👑</span>
+              <span>Premium</span>
+            </div>
+          )}
+          
+          {/* 🆕 Upgrade Button for Free Users */}
+          {!isPremium && (
+            <button 
+              onClick={onBuyPremium}
+              style={{
+                padding: '0.6rem 1.2rem',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                marginRight: '1rem'
+              }}
+            >
+              ⭐ Upgrade to Premium
+            </button>
+          )}
+          
           <button 
             className="theme-toggle" 
             onClick={toggleTheme} 
@@ -420,6 +479,60 @@ const Dashboard = ({ userEmail, onLogout }) => {
           <h1>Welcome back! 👋</h1>
           <p>Here's your financial overview</p>
         </div>
+
+        {/* 🆕 Usage Indicator for Free Users */}
+        {!isPremium && usageInfo && (
+          <div style={{
+            padding: '1rem',
+            background: usageInfo.remaining <= 2 ? '#fef3c7' : '#f0f9ff',
+            borderRadius: '8px',
+            marginBottom: '1rem',
+            border: `2px solid ${usageInfo.remaining <= 2 ? '#f59e0b' : '#3b82f6'}`
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <strong>Monthly Transactions:</strong> {usageInfo.used} / {usageInfo.limit}
+                {usageInfo.remaining <= 2 && (
+                  <span style={{ color: '#f59e0b', marginLeft: '0.5rem' }}>
+                    ⚠️ Only {usageInfo.remaining} left!
+                  </span>
+                )}
+              </div>
+              <button 
+                onClick={onBuyPremium}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                Unlock Unlimited
+              </button>
+            </div>
+            
+            {/* Progress Bar */}
+            <div style={{
+              marginTop: '0.5rem',
+              height: '8px',
+              background: '#e5e7eb',
+              borderRadius: '4px',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                height: '100%',
+                width: `${(usageInfo.used / usageInfo.limit) * 100}%`,
+                background: usageInfo.remaining <= 2 
+                  ? 'linear-gradient(90deg, #f59e0b, #ef4444)' 
+                  : 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+                transition: 'width 0.3s ease'
+              }} />
+            </div>
+          </div>
+        )}
 
         {transactions.length === 0 ? (
           <div className="empty-state">
@@ -533,7 +646,7 @@ const Dashboard = ({ userEmail, onLogout }) => {
           </div>
         </div>
 
-        {/* 🆕 UPDATED TRANSACTIONS SECTION WITH SEARCH & FILTER */}
+        {/* Transactions Section with Search & Filter */}
         {transactions.length > 0 && (
           <div className="transactions-section">
             <div className="transactions-header">
@@ -549,7 +662,7 @@ const Dashboard = ({ userEmail, onLogout }) => {
               </div>
             </div>
 
-            {/* 🆕 SEARCH & FILTER BAR */}
+            {/* Search & Filter Bar */}
             <div className="search-filter-bar">
               <div className="search-box">
                 <input
@@ -602,14 +715,14 @@ const Dashboard = ({ userEmail, onLogout }) => {
               </div>
             </div>
 
-            {/* 🆕 RESULTS INFO */}
+            {/* Results Info */}
             {filteredTransactions.length !== transactions.length && (
               <div className="results-info">
                 Showing {filteredTransactions.length} of {transactions.length} transactions
               </div>
             )}
 
-            {/* 🆕 FILTERED TRANSACTIONS LIST */}
+            {/* Filtered Transactions List */}
             {filteredTransactions.length === 0 ? (
               <div className="no-results">
                 <p>No transactions found matching your filters.</p>
@@ -678,7 +791,62 @@ const Dashboard = ({ userEmail, onLogout }) => {
         </div>
       )}
 
-      {/* 🆕 CONFIRMATION MODAL */}
+      {/* 🆕 Limit Reached Modal */}
+      {showLimitModal && (
+        <div className="modal-overlay">
+          <div style={{
+            background: 'white',
+            padding: '2rem',
+            borderRadius: '15px',
+            maxWidth: '500px',
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔒</div>
+            <h2 style={{ marginBottom: '1rem', color: '#667eea' }}>
+              Monthly Limit Reached!
+            </h2>
+            <p style={{ marginBottom: '1.5rem', color: '#6b7280' }}>
+              You've used all <strong>10 free transactions</strong> this month.
+              Upgrade to Premium for unlimited transactions!
+            </p>
+            
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setShowLimitModal(false)}
+                style={{
+                  padding: '0.8rem 1.5rem',
+                  background: '#f3f4f6',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                Close
+              </button>
+              <button 
+                onClick={() => {
+                  setShowLimitModal(false);
+                  onBuyPremium();
+                }}
+                style={{
+                  padding: '0.8rem 1.5rem',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontWeight: 600
+                }}
+              >
+                ⭐ Upgrade Now
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
       {confirmModal.show && (
         <div className="modal-overlay">
           <div className="modal-content confirmation-modal">
