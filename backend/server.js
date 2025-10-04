@@ -23,6 +23,10 @@ const Transaction = require('./models/Transaction');
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
+// 🆕 Payment Routes
+const paymentRoutes = require('./routes/payment');
+app.use('/api/payment', paymentRoutes);
+
 // Get user's financial data with transactions
 app.get('/api/financial-data/:email', async (req, res) => {
   try {
@@ -182,6 +186,7 @@ app.get('/', (req, res) => {
     message: 'PFM Backend Server is running!',
     endpoints: {
       auth: '/api/auth/login, /api/auth/register',
+      payment: '/api/payment/create-order, /api/payment/verify-payment', // 🆕 Added
       financialData: '/api/financial-data/:email',
       transactions: {
         getAll: '/api/financial-data/:email',
@@ -200,6 +205,9 @@ app.listen(PORT, () => {
   console.log('Available endpoints:');
   console.log('  - POST /api/auth/register');
   console.log('  - POST /api/auth/login');
+  console.log('  - POST /api/payment/create-order'); // 🆕 Added
+  console.log('  - POST /api/payment/verify-payment'); // 🆕 Added
+  console.log('  - GET /api/payment/premium-status/:email'); // 🆕 Added
   console.log('  - GET /api/financial-data/:email');
   console.log('  - POST /api/transactions (types: income, expense, savings)');
   console.log('  - DELETE /api/transactions/:id');

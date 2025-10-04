@@ -199,6 +199,7 @@
   font-weight: 500;
 }
 
+/* Responsive */
 @media (max-width: 768px) {
   .premium-content {
     grid-template-columns: 1fr;
@@ -212,5 +213,9 @@
   .back-btn {
     position: static;
     margin-bottom: 1rem;
+  }
+
+  .plan-price {
+    font-size: 2.5rem;
   }
 }
