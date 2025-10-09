@@ -2,42 +2,125 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const helmet = require('helmet'); // ✅ Security headers
+const rateLimit = require('express-rate-limit'); // ✅ Rate limiting
+const mongoSanitize = require('express-mongo-sanitize'); // ✅ Prevent NoSQL injection
 
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// ========================================
+// SECURITY MIDDLEWARE (Add BEFORE other middleware)
+// ========================================
 
-// MongoDB Connection
+// ✅ Security headers (helmet)
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable for development (enable in production)
+  crossOriginEmbedderPolicy: false
+}));
+
+// ✅ Rate limiting - Global (100 requests per 15 minutes)
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Max 100 requests per 15 minutes per IP
+  message: {
+    success: false,
+    message: 'Too many requests from this IP, please try again after 15 minutes.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ✅ Strict rate limiting for auth routes (5 attempts per 15 minutes)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Max 5 login/register attempts per 15 minutes
+  skipSuccessfulRequests: true, // Don't count successful requests
+  message: {
+    success: false,
+    message: 'Too many authentication attempts, please try again after 15 minutes.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// ✅ Medium rate limiting for transactions (20 per 15 minutes)
+const transactionLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: {
+    success: false,
+    message: 'Too many transaction requests, please try again later.'
+  }
+});
+
+// Apply global rate limiter to all routes
+app.use(globalLimiter);
+
+// ✅ Prevent NoSQL injection
+app.use(mongoSanitize());
+
+// ========================================
+// STANDARD MIDDLEWARE
+// ========================================
+
+// CORS Configuration
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+app.use(express.json({ limit: '10mb' })); // ✅ Limit payload size
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ========================================
+// DATABASE CONNECTION
+// ========================================
+
 const uri = process.env.MONGO_URI;
-mongoose.connect(uri)
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.log('MongoDB connection error:', err));
+mongoose.connect(uri, {
+  serverSelectionTimeoutMS: 30000,
+  socketTimeoutMS: 45000,
+})
+  .then(() => console.log('✅ MongoDB connected'))
+  .catch(err => {
+    console.error('❌ MongoDB connection error:', err);
+    process.exit(1); // Exit if DB connection fails
+  });
 
-// Import Models
-const User = require('./models/User');
-const Transaction = require('./models/Transaction');
+// ========================================
+// ROUTES
+// ========================================
 
-// Authentication Routes
+// Authentication Routes (Public) - With strict rate limiting
 const authRoutes = require('./routes/auth');
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authLimiter, authRoutes); // ✅ Add rate limiter
+
+// Transaction Routes (Protected with JWT) - With medium rate limiting
+const transactionRoutes = require('./routes/transactions');
+app.use('/api/transactions', transactionLimiter, transactionRoutes); // ✅ Add rate limiter
 
 // Payment Routes
 const paymentRoutes = require('./routes/payment');
 app.use('/api/payment', paymentRoutes);
 
-// Get user's financial data with transactions
+// ========================================
+// LEGACY/UTILITY ROUTES
+// ========================================
+
+const User = require('./models/User');
+const Transaction = require('./models/Transaction');
+
+// Get financial data (legacy route)
 app.get('/api/financial-data/:email', async (req, res) => {
   try {
     const { email } = req.params;
     
-    console.log('Fetching financial data for:', email);
+    console.log('⚠️ Using legacy route for:', email);
     
-    // Get all transactions for this user
     const transactions = await Transaction.find({ email }).sort({ date: -1 });
     
-    // Calculate totals from actual transactions (3 types now)
     let income = 0;
     let expenses = 0;
     let savings = 0;
@@ -52,21 +135,17 @@ app.get('/api/financial-data/:email', async (req, res) => {
       }
     });
     
-    // Total Balance = Income - Expenses - Savings
     const totalBalance = income - expenses - savings;
-    const monthlyGrowth = 0;
-    
-    const financialData = {
-      totalBalance,
-      income,
-      expenses,
-      savings,
-      monthlyGrowth
-    };
     
     res.json({ 
       success: true, 
-      data: financialData,
+      data: {
+        totalBalance,
+        income,
+        expenses,
+        savings,
+        monthlyGrowth: 0
+      },
       transactions: transactions.map(t => ({
         _id: t._id.toString(),
         type: t.type,
@@ -82,7 +161,7 @@ app.get('/api/financial-data/:email', async (req, res) => {
   }
 });
 
-// 🆕 Get user's usage info (transaction limits)
+// Get usage info
 app.get('/api/usage/:email', async (req, res) => {
   try {
     const { email } = req.params;
@@ -92,7 +171,6 @@ app.get('/api/usage/:email', async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
     
-    // Reset counter if new month
     const now = new Date();
     const lastReset = new Date(user.lastTransactionResetDate || now);
     
@@ -117,187 +195,129 @@ app.get('/api/usage/:email', async (req, res) => {
   }
 });
 
-// Save transaction with premium limit check
-app.post('/api/transactions', async (req, res) => {
-  try {
-    const { email, type, amount, description, category } = req.body;
-    
-    console.log('Saving transaction:', { email, type, amount, description, category });
-    
-    // Validate type
-    if (!['income', 'expense', 'savings'].includes(type)) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid transaction type. Must be income, expense, or savings.' 
-      });
-    }
-    
-    // 🆕 Get user to check premium status and limits
-    const user = await User.findOne({ email });
-    
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-    
-    // 🆕 Check if free user has reached monthly limit
-    if (!user.isPremium) {
-      // Reset counter if new month
-      const now = new Date();
-      const lastReset = new Date(user.lastTransactionResetDate || now);
-      
-      if (now.getMonth() !== lastReset.getMonth() || now.getFullYear() !== lastReset.getFullYear()) {
-        user.monthlyTransactionCount = 0;
-        user.lastTransactionResetDate = now;
-        await user.save();
-      }
-      
-      // Check transaction limit (10 for free users)
-      const currentCount = user.monthlyTransactionCount || 0;
-      
-      if (currentCount >= 10) {
-        return res.status(403).json({
-          success: false,
-          message: 'Monthly transaction limit reached (10/10). Upgrade to Premium for unlimited transactions!',
-          isPremiumRequired: true,
-          usageInfo: {
-            used: currentCount,
-            limit: 10,
-            remaining: 0
-          }
-        });
-      }
-    }
-    
-    // Create and save transaction
-    const transaction = new Transaction({
-      email,
-      type,
-      amount,
-      description,
-      category
-    });
-    
-    await transaction.save();
-    
-    // 🆕 Increment transaction count for free users
-    if (!user.isPremium) {
-      user.monthlyTransactionCount = (user.monthlyTransactionCount || 0) + 1;
-      if (!user.lastTransactionResetDate) {
-        user.lastTransactionResetDate = new Date();
-      }
-      await user.save();
-    }
-    
-    res.json({ 
-      success: true, 
-      message: 'Transaction saved successfully!',
-      transaction: {
-        _id: transaction._id.toString(),
-        type: transaction.type,
-        amount: transaction.amount,
-        description: transaction.description,
-        category: transaction.category,
-        date: new Date(transaction.date).toLocaleDateString()
-      },
-      // 🆕 Send usage info
-      usageInfo: !user.isPremium ? {
-        used: user.monthlyTransactionCount,
-        limit: 10,
-        remaining: 10 - user.monthlyTransactionCount
-      } : null
-    });
-  } catch (error) {
-    console.error('Error saving transaction:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error: ' + error.message 
-    });
-  }
-});
+// ========================================
+// ROOT ROUTE & HEALTH CHECK
+// ========================================
 
-// Delete transaction
-app.delete('/api/transactions/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    
-    console.log('Deleting transaction with ID:', id);
-    
-    const result = await Transaction.findByIdAndDelete(id);
-    
-    if (!result) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Transaction not found' 
-      });
-    }
-    
-    res.json({ 
-      success: true, 
-      message: 'Transaction deleted successfully!' 
-    });
-  } catch (error) {
-    console.error('Error deleting transaction:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error: ' + error.message 
-    });
-  }
-});
-
-// TEMPORARY - Delete all transactions for a user (for testing/cleanup)
-app.delete('/api/transactions/all/:email', async (req, res) => {
-  try {
-    const { email } = req.params;
-    
-    console.log('Deleting all transactions for:', email);
-    
-    const result = await Transaction.deleteMany({ email });
-    
-    res.json({ 
-      success: true, 
-      message: `Deleted ${result.deletedCount} transactions!` 
-    });
-  } catch (error) {
-    console.error('Error deleting all transactions:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Server error' 
-    });
-  }
-});
-
-// Test route
 app.get('/', (req, res) => {
   res.json({ 
-    message: 'PFM Backend Server is running!',
+    message: '💰 PFM Backend Server is running!',
+    status: 'active',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    security: {
+      rateLimit: 'enabled',
+      helmet: 'enabled',
+      cors: 'enabled',
+      mongoSanitize: 'enabled'
+    },
     endpoints: {
-      auth: '/api/auth/login, /api/auth/register',
-      payment: '/api/payment/create-order, /api/payment/verify-payment',
-      financialData: '/api/financial-data/:email',
-      usage: '/api/usage/:email', // 🆕 Added
+      auth: {
+        register: 'POST /api/auth/register (Rate limit: 5/15min)',
+        login: 'POST /api/auth/login (Rate limit: 5/15min)',
+        forgotPassword: 'POST /api/auth/forgot-password',
+        verifyAnswer: 'POST /api/auth/verify-security-answer',
+        resetPassword: 'POST /api/auth/reset-password'
+      },
       transactions: {
-        getAll: '/api/financial-data/:email',
-        create: 'POST /api/transactions (types: income, expense, savings)',
-        delete: 'DELETE /api/transactions/:id',
-        deleteAll: 'DELETE /api/transactions/all/:email'
+        getAll: 'GET /api/transactions (🔒 JWT Required, Rate limit: 20/15min)',
+        create: 'POST /api/transactions (🔒 JWT Required)',
+        update: 'PUT /api/transactions/:id (🔒 JWT Required)',
+        delete: 'DELETE /api/transactions/:id (🔒 JWT Required)',
+        deleteAll: 'DELETE /api/transactions/all/:email (🔒 JWT Required)'
+      },
+      payment: {
+        createOrder: 'POST /api/payment/create-order',
+        verifyPayment: 'POST /api/payment/verify-payment',
+        premiumStatus: 'GET /api/payment/premium-status/:email'
+      },
+      legacy: {
+        financialData: 'GET /api/financial-data/:email',
+        usage: 'GET /api/usage/:email'
       }
     }
   });
 });
 
-// Start server
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'healthy',
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+  });
+});
+
+// ========================================
+// ERROR HANDLING
+// ========================================
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: 'Route not found'
+  });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('❌ Error:', err);
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
+
+// ========================================
+// GRACEFUL SHUTDOWN
+// ========================================
+
+process.on('SIGTERM', () => {
+  console.log('👋 SIGTERM received, closing server gracefully');
+  mongoose.connection.close(false, () => {
+    console.log('✅ MongoDB connection closed');
+    process.exit(0);
+  });
+});
+
+// ========================================
+// START SERVER
+// ========================================
+
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log('Available endpoints:');
-  console.log('  - POST /api/auth/register');
-  console.log('  - POST /api/auth/login');
-  console.log('  - POST /api/payment/create-order');
-  console.log('  - POST /api/payment/verify-payment');
-  console.log('  - GET /api/payment/premium-status/:email');
-  console.log('  - GET /api/financial-data/:email');
-  console.log('  - GET /api/usage/:email'); // 🆕 Added
-  console.log('  - POST /api/transactions (types: income, expense, savings)');
-  console.log('  - DELETE /api/transactions/:id');
-  console.log('  - DELETE /api/transactions/all/:email');
+  console.log(`\n🚀 Server running on port ${PORT}`);
+  console.log(`📍 Server URL: http://localhost:${PORT}`);
+  console.log(`🔒 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log('\n✅ Security Features:');
+  console.log('   🛡️  Helmet.js - Security Headers');
+  console.log('   ⏱️  Rate Limiting - Enabled');
+  console.log('   🚫 NoSQL Injection Protection - Enabled');
+  console.log('   🔐 CORS - Configured');
+  console.log('\n✅ Available endpoints:');
+  console.log('\n   🔓 Public Routes:');
+  console.log('      - POST /api/auth/register (Rate: 5/15min)');
+  console.log('      - POST /api/auth/login (Rate: 5/15min)');
+  console.log('      - POST /api/auth/forgot-password');
+  console.log('      - POST /api/auth/verify-security-answer');
+  console.log('      - POST /api/auth/reset-password');
+  console.log('\n   🔒 Protected Routes (JWT Required):');
+  console.log('      - GET /api/transactions (Rate: 20/15min)');
+  console.log('      - POST /api/transactions (Rate: 20/15min)');
+  console.log('      - PUT /api/transactions/:id');
+  console.log('      - DELETE /api/transactions/:id');
+  console.log('      - DELETE /api/transactions/all/:email');
+  console.log('\n   💳 Payment Routes:');
+  console.log('      - POST /api/payment/create-order');
+  console.log('      - POST /api/payment/verify-payment');
+  console.log('      - GET /api/payment/premium-status/:email');
+  console.log('\n   📊 Legacy/Utility Routes:');
+  console.log('      - GET /api/financial-data/:email');
+  console.log('      - GET /api/usage/:email');
+  console.log('\n   🏥 Health Check:');
+  console.log('      - GET /health');
+  console.log('\n');
 });

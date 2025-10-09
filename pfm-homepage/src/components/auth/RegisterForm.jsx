@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { isValidEmail, validatePassword, isRequired, sanitizeInput } from '../../utils/validators';
+import { API_URL } from '../../utils/constants';
 
 const RegisterForm = (props) => {
   // State for form inputs
@@ -6,7 +8,8 @@ const RegisterForm = (props) => {
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
+    confirmPassword: '',
+    securityAnswer: ''
   });
   
   // State for form validation
@@ -16,9 +19,12 @@ const RegisterForm = (props) => {
   // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
+    // Sanitize input to prevent XSS
+    const sanitizedValue = sanitizeInput(value);
+    
     setFormData(prev => ({
       ...prev,
-      [name]: value
+      [name]: sanitizedValue
     }));
     
     // Clear error when user starts typing
@@ -30,36 +36,42 @@ const RegisterForm = (props) => {
     }
   };
 
-  // Form validation
+  // Form validation using utility functions
   const validateForm = () => {
     const newErrors = {};
 
     // Name validation
-    if (!formData.name) {
+    if (!isRequired(formData.name)) {
       newErrors.name = 'Name is required';
     } else if (formData.name.length < 2) {
       newErrors.name = 'Name must be at least 2 characters';
     }
 
     // Email validation
-    if (!formData.email) {
+    if (!isRequired(formData.email)) {
       newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    } else if (!isValidEmail(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
 
     // Password validation
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    const passwordValidation = validatePassword(formData.password);
+    if (!passwordValidation.isValid) {
+      newErrors.password = passwordValidation.message;
     }
 
     // Confirm Password validation
-    if (!formData.confirmPassword) {
+    if (!isRequired(formData.confirmPassword)) {
       newErrors.confirmPassword = 'Please confirm your password';
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    // Security Answer validation
+    if (!isRequired(formData.securityAnswer)) {
+      newErrors.securityAnswer = 'Please answer the security question';
+    } else if (formData.securityAnswer.length < 2) {
+      newErrors.securityAnswer = 'Answer must be at least 2 characters';
     }
 
     setErrors(newErrors);
@@ -78,7 +90,7 @@ const RegisterForm = (props) => {
     
     try {
       // Make actual API call to backend
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +98,8 @@ const RegisterForm = (props) => {
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
-          password: formData.password
+          password: formData.password,
+          securityAnswer: formData.securityAnswer
         }),
       });
 
@@ -94,22 +107,48 @@ const RegisterForm = (props) => {
 
       if (response.ok && data.success) {
         console.log('Registration successful:', data);
-        alert('Registration successful! Please login.');
+        
+        // ✅ STORE TOKEN AND USER DATA IN LOCALSTORAGE (AUTO-LOGIN)
+        localStorage.setItem('token', data.data.token);
+        localStorage.setItem('user', JSON.stringify({
+          id: data.data.id,
+          name: data.data.name,
+          email: data.data.email,
+          isPremium: data.data.isPremium
+        }));
+        
+        console.log('✅ Token stored:', data.data.token.substring(0, 20) + '...');
+        console.log('✅ Auto-login successful! Redirecting to dashboard...');
+        
+        // Show success message
+        alert('✅ Registration successful! Redirecting to dashboard...');
         
         // Reset form
-        setFormData({ name: '', email: '', password: '', confirmPassword: '' });
+        setFormData({ 
+          name: '', 
+          email: '', 
+          password: '', 
+          confirmPassword: '',
+          securityAnswer: ''
+        });
         
-        // Redirect to login
-        props.onLoginClick && props.onLoginClick();
+        // ✅ REDIRECT TO DASHBOARD (Auto-login)
+        props.onLoginSuccess && props.onLoginSuccess(data.data.email);
         
       } else {
         // Handle registration failure
-        alert('Registration failed: ' + (data.message || 'Please try again'));
+        setErrors({
+          email: data.message || 'Registration failed. Please try again.',
+          password: ' ' // Keep fields highlighted
+        });
       }
       
     } catch (error) {
       console.error('Registration error:', error);
-      alert('Registration failed. Please check if the server is running.');
+      setErrors({
+        email: 'Connection failed. Please check if the server is running.',
+        password: ' '
+      });
     } finally {
       setIsLoading(false);
     }
@@ -117,10 +156,11 @@ const RegisterForm = (props) => {
 
   return (
     <div className="login-container">
-      {/* 🆕 BACK BUTTON */}
+      {/* BACK BUTTON */}
       <button 
         className="back-button" 
         onClick={() => props.onBack && props.onBack()}
+        aria-label="Back to Home"
       >
         ← Back to Home
       </button>
@@ -131,7 +171,7 @@ const RegisterForm = (props) => {
           <p>Join FM and start managing your finances</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="login-form">
+        <form onSubmit={handleSubmit} className="login-form" noValidate>
           {/* Name Field */}
           <div className="form-group">
             <label htmlFor="name">Full Name *</label>
@@ -143,8 +183,15 @@ const RegisterForm = (props) => {
               onChange={handleChange}
               placeholder="Enter your full name"
               className={errors.name ? 'error' : ''}
+              autoComplete="name"
+              aria-invalid={errors.name ? 'true' : 'false'}
+              aria-describedby={errors.name ? 'name-error' : undefined}
             />
-            {errors.name && <span className="error-message">{errors.name}</span>}
+            {errors.name && (
+              <span id="name-error" className="error-message" role="alert">
+                {errors.name}
+              </span>
+            )}
           </div>
 
           {/* Email Field */}
@@ -158,8 +205,15 @@ const RegisterForm = (props) => {
               onChange={handleChange}
               placeholder="Enter your email"
               className={errors.email ? 'error' : ''}
+              autoComplete="email"
+              aria-invalid={errors.email ? 'true' : 'false'}
+              aria-describedby={errors.email ? 'email-error' : undefined}
             />
-            {errors.email && <span className="error-message">{errors.email}</span>}
+            {errors.email && (
+              <span id="email-error" className="error-message" role="alert">
+                {errors.email}
+              </span>
+            )}
           </div>
 
           {/* Password Field */}
@@ -171,10 +225,17 @@ const RegisterForm = (props) => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="Create a password"
+              placeholder="Create a password (min 6 characters)"
               className={errors.password ? 'error' : ''}
+              autoComplete="new-password"
+              aria-invalid={errors.password ? 'true' : 'false'}
+              aria-describedby={errors.password ? 'password-error' : undefined}
             />
-            {errors.password && <span className="error-message">{errors.password}</span>}
+            {errors.password && errors.password.trim() && (
+              <span id="password-error" className="error-message" role="alert">
+                {errors.password}
+              </span>
+            )}
           </div>
 
           {/* Confirm Password Field */}
@@ -188,8 +249,45 @@ const RegisterForm = (props) => {
               onChange={handleChange}
               placeholder="Confirm your password"
               className={errors.confirmPassword ? 'error' : ''}
+              autoComplete="new-password"
+              aria-invalid={errors.confirmPassword ? 'true' : 'false'}
+              aria-describedby={errors.confirmPassword ? 'confirm-password-error' : undefined}
             />
-            {errors.confirmPassword && <span className="error-message">{errors.confirmPassword}</span>}
+            {errors.confirmPassword && (
+              <span id="confirm-password-error" className="error-message" role="alert">
+                {errors.confirmPassword}
+              </span>
+            )}
+          </div>
+
+          {/* Security Question Field */}
+          <div className="form-group">
+            <label htmlFor="securityAnswer">Security Question *</label>
+            <p style={{ 
+              fontSize: '0.85rem', 
+              color: '#64748b', 
+              marginBottom: '0.5rem',
+              marginTop: '0.25rem'
+            }}>
+              What is your favorite color? (For password recovery)
+            </p>
+            <input
+              type="text"
+              id="securityAnswer"
+              name="securityAnswer"
+              value={formData.securityAnswer}
+              onChange={handleChange}
+              placeholder="Enter your favorite color"
+              className={errors.securityAnswer ? 'error' : ''}
+              autoComplete="off"
+              aria-invalid={errors.securityAnswer ? 'true' : 'false'}
+              aria-describedby={errors.securityAnswer ? 'security-answer-error' : undefined}
+            />
+            {errors.securityAnswer && (
+              <span id="security-answer-error" className="error-message" role="alert">
+                {errors.securityAnswer}
+              </span>
+            )}
           </div>
 
           {/* Submit Button */}
@@ -197,6 +295,7 @@ const RegisterForm = (props) => {
             type="submit" 
             className="login-button"
             disabled={isLoading}
+            aria-busy={isLoading}
           >
             {isLoading ? 'Creating Account...' : 'Create Account'}
           </button>

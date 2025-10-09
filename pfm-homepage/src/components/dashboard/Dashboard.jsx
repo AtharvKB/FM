@@ -1,5 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
+import { formatCurrency, formatDate } from '../../utils/formatters';
+import { TYPE_ICONS, CATEGORY_ICONS, CATEGORY_LABELS } from '../../utils/constants';
+import { transactionsAPI } from '../../services/api'; // ✅ ADD THIS
+import BudgetAlerts from './BudgetAlerts';
+
+// Import your existing modals
+import TransactionModal from '../modals/TransactionModal';
+import BudgetModal from '../modals/BudgetModal';
+import AnalyticsModal from '../modals/AnalyticsModal';
+import ReportsModal from '../modals/ReportsModal';
+import LimitReachedModal from '../modals/LimitReachedModal';
+import ConfirmationModal from '../modals/ConfirmationModal';
+import ProfileModal from '../modals/ProfileModal';
+import SettingsModal from '../modals/SettingsModal';
+import HelpModal from '../modals/HelpModal';
+import Toast from '../common/Toast';
 
 const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogout }) => {
   const [financialData, setFinancialData] = useState({
@@ -13,7 +29,6 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // 🆕 Usage tracking state
   const [usageInfo, setUsageInfo] = useState(null);
   const [showLimitModal, setShowLimitModal] = useState(false);
   
@@ -22,6 +37,9 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showReports, setShowReports] = useState(false);
   const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showHelpModal, setShowHelpModal] = useState(false);
   
   // Budget state
   const [budgets, setBudgets] = useState({
@@ -32,10 +50,8 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     other: 0
   });
   
-  // Toast notification state
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
   
-  // Transaction form state
   const [transactionForm, setTransactionForm] = useState({
     type: 'expense',
     amount: '',
@@ -43,20 +59,16 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     category: 'food'
   });
 
-  // Dark mode state
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('theme');
     return saved === 'dark';
   });
   
   const [showUserMenu, setShowUserMenu] = useState(false);
-
-  // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
   const [filterCategory, setFilterCategory] = useState('all');
 
-  // Confirmation Modal State
   const [confirmModal, setConfirmModal] = useState({
     show: false,
     title: '',
@@ -65,20 +77,26 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     isDeleting: false
   });
 
-  // Loading states
   const [isExporting, setIsExporting] = useState(false);
 
   // Dark mode effect
   useEffect(() => {
     localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
-    document.documentElement.setAttribute('data-theme', isDarkMode ? 'dark' : 'light');
+    
+    const dashboardElement = document.querySelector('.dashboard-page');
+    if (dashboardElement) {
+      if (isDarkMode) {
+        dashboardElement.setAttribute('data-theme', 'dark');
+      } else {
+        dashboardElement.removeAttribute('data-theme');
+      }
+    }
   }, [isDarkMode]);
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
   };
 
-  // Toast notification function
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => {
@@ -86,7 +104,6 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     }, 3000);
   };
 
-  // 🆕 Fetch usage info for free users
   const fetchUsageInfo = async () => {
     if (!isPremium) {
       try {
@@ -101,21 +118,58 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     }
   };
 
+  // ✅ UPDATED: Fetch transactions using API service with JWT
   const fetchFinancialData = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`http://localhost:5000/api/financial-data/${userEmail}`);
-      const result = await response.json();
+      setError(null);
+
+      // ✅ Use API service instead of direct fetch
+      const result = await transactionsAPI.getAll();
       
-      if (result.success) {
-        setFinancialData(result.data);
-        if (result.transactions) {
-          setTransactions(result.transactions);
-        }
+      if (result.success && result.data) {
+        const fetchedTransactions = result.data;
+        setTransactions(fetchedTransactions);
+
+        // ✅ Calculate financial data from transactions
+        const calculated = {
+          income: 0,
+          expenses: 0,
+          savings: 0,
+          totalBalance: 0,
+          monthlyGrowth: 0
+        };
+
+        fetchedTransactions.forEach(txn => {
+          const amount = parseFloat(txn.amount) || 0;
+          
+          if (txn.type === 'income') {
+            calculated.income += amount;
+            calculated.totalBalance += amount;
+          } else if (txn.type === 'expense') {
+            calculated.expenses += amount;
+            calculated.totalBalance -= amount;
+          } else if (txn.type === 'savings') {
+            calculated.savings += amount;
+            calculated.totalBalance -= amount;
+          }
+        });
+
+        setFinancialData(calculated);
       }
     } catch (err) {
-      console.error('Error:', err);
-      setError('Unable to connect to server');
+      console.error('Error fetching transactions:', err);
+      
+      // ✅ Handle authentication errors
+      if (err.response?.status === 401) {
+        setError('Session expired. Please login again.');
+        setTimeout(() => {
+          localStorage.clear();
+          window.location.href = '/login';
+        }, 2000);
+      } else {
+        setError('Unable to connect to server. Please try again.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -124,7 +178,7 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
   useEffect(() => {
     if (userEmail) {
       fetchFinancialData();
-      fetchUsageInfo(); // 🆕 Fetch usage on load
+      fetchUsageInfo();
       const savedBudgets = localStorage.getItem(`budgets_${userEmail}`);
       if (savedBudgets) {
         setBudgets(JSON.parse(savedBudgets));
@@ -151,7 +205,7 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     setTimeout(() => {
       const headers = ['Date', 'Type', 'Category', 'Description', 'Amount'];
       const rows = transactions.map(txn => [
-        txn.date,
+        formatDate(txn.date),
         txn.type,
         txn.category,
         txn.description,
@@ -175,7 +229,22 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     }, 1000);
   };
 
-  // 🆕 Updated transaction submit with limit check
+  // Check for budget warnings
+  const checkBudgetWarnings = (category, newSpent) => {
+    const budget = budgets[category];
+    if (budget === 0) return;
+
+    const percentage = (newSpent / budget) * 100;
+    const categoryName = CATEGORY_LABELS[category] || category.charAt(0).toUpperCase() + category.slice(1);
+
+    if (percentage >= 100) {
+      showToast(`🔴 ${categoryName} budget exceeded!`, 'error');
+    } else if (percentage >= 80) {
+      showToast(`⚠️ ${categoryName} budget at ${Math.round(percentage)}%`, 'warning');
+    }
+  };
+
+  // ✅ UPDATED: Add transaction using API service with JWT
   const handleTransactionSubmit = async (e) => {
     e.preventDefault();
     
@@ -185,20 +254,21 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/transactions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: userEmail,
-          ...transactionForm,
-          amount: parseFloat(transactionForm.amount)
-        })
+      // ✅ Use API service instead of direct fetch
+      const result = await transactionsAPI.create({
+        email: userEmail,
+        type: transactionForm.type,
+        category: transactionForm.category,
+        amount: parseFloat(transactionForm.amount),
+        description: transactionForm.description,
+        date: new Date()
       });
-
-      const result = await response.json();
       
-      if (result.success) {
+      if (result.success && result.data) {
+        const newTransaction = result.data;
         const amountNum = parseFloat(transactionForm.amount);
+
+        // ✅ Update financial data
         setFinancialData(prev => {
           const newData = { ...prev };
           
@@ -216,28 +286,39 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
           return newData;
         });
 
-        if (result.transaction) {
-          setTransactions(prev => [result.transaction, ...prev]);
-        }
-        
-        // 🆕 Update usage info
-        if (result.usageInfo) {
-          setUsageInfo(result.usageInfo);
+        // ✅ Add new transaction to list
+        setTransactions(prev => [newTransaction, ...prev]);
+
+        // Check budget warnings for expenses
+        if (transactionForm.type === 'expense') {
+          const category = transactionForm.category;
+          const currentSpent = transactions
+            .filter(t => t.type === 'expense' && t.category === category)
+            .reduce((sum, t) => sum + t.amount, 0);
+          
+          checkBudgetWarnings(category, currentSpent + amountNum);
         }
         
         setTransactionForm({ type: 'expense', amount: '', description: '', category: 'food' });
         setShowTransactionModal(false);
         showToast('Transaction saved successfully! 💰', 'success');
-      } else if (result.isPremiumRequired) {
-        // 🆕 Show limit reached modal
+      }
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      
+      // ✅ Handle specific errors
+      if (error.response?.status === 401) {
+        showToast('Session expired. Please login again.', 'error');
+        setTimeout(() => {
+          localStorage.clear();
+          window.location.href = '/login';
+        }, 2000);
+      } else if (error.response?.data?.isPremiumRequired) {
         setShowLimitModal(true);
         setShowTransactionModal(false);
       } else {
-        showToast('Failed: ' + result.message, 'error');
+        showToast('Failed to add transaction: ' + (error.response?.data?.message || 'Server error'), 'error');
       }
-    } catch (error) {
-      console.error('Error:', error);
-      showToast('Failed to add transaction', 'error');
     }
   };
 
@@ -251,6 +332,7 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     });
   };
 
+  // ✅ UPDATED: Delete transaction using API service with JWT
   const handleDeleteTransaction = (index) => {
     const txn = transactions[index];
     
@@ -267,14 +349,13 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
         }
 
         try {
-          const response = await fetch(`http://localhost:5000/api/transactions/${txn._id}`, {
-            method: 'DELETE',
-          });
-
-          const result = await response.json();
+          // ✅ Use API service instead of direct fetch
+          const result = await transactionsAPI.delete(txn._id);
           
           if (result.success) {
             const amountNum = txn.amount;
+
+            // ✅ Update financial data
             setFinancialData(prev => {
               const newData = { ...prev };
               
@@ -292,14 +373,23 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
               return newData;
             });
 
+            // ✅ Remove transaction from list
             setTransactions(prev => prev.filter((_, i) => i !== index));
             showToast('Transaction deleted successfully!', 'success');
-          } else {
-            showToast('Failed to delete: ' + result.message, 'error');
           }
         } catch (error) {
           console.error('Error deleting transaction:', error);
-          showToast('Failed to delete transaction', 'error');
+          
+          // ✅ Handle authentication errors
+          if (error.response?.status === 401) {
+            showToast('Session expired. Please login again.', 'error');
+            setTimeout(() => {
+              localStorage.clear();
+              window.location.href = '/login';
+            }, 2000);
+          } else {
+            showToast('Failed to delete: ' + (error.response?.data?.message || 'Server error'), 'error');
+          }
         } finally {
           setConfirmModal({ show: false, title: '', message: '', onConfirm: null, isDeleting: false });
         }
@@ -373,7 +463,6 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
         </div>
         
         <div className="nav-actions">
-          {/* 🆕 Premium Badge */}
           {isPremium && (
             <div style={{
               display: 'inline-flex',
@@ -392,7 +481,6 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
             </div>
           )}
           
-          {/* 🆕 Upgrade Button for Free Users */}
           {!isPremium && (
             <button 
               onClick={onBuyPremium}
@@ -413,8 +501,7 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
           
           <button 
             className="theme-toggle" 
-            onClick={toggleTheme} 
-            title={isDarkMode ? 'Light Mode' : 'Dark Mode'}
+            onClick={toggleTheme}
           >
             {isDarkMode ? '☀️' : '🌙'}
           </button>
@@ -447,19 +534,28 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
                 
                 <div className="dropdown-divider"></div>
                 
-                <button className="dropdown-item" onClick={() => { setShowUserMenu(false); showToast('Profile feature coming soon!', 'success'); }}>
+                <button className="dropdown-item" onClick={() => {
+                  setShowProfileModal(true);
+                  setShowUserMenu(false);
+                }}>
                   <span>👤</span> Profile
                 </button>
-                <button className="dropdown-item" onClick={() => { setShowUserMenu(false); showToast('Settings feature coming soon!', 'success'); }}>
+                <button className="dropdown-item" onClick={() => {
+                  setShowSettingsModal(true);
+                  setShowUserMenu(false);
+                }}>
                   <span>⚙️</span> Settings
                 </button>
-                <button className="dropdown-item" onClick={() => { setShowUserMenu(false); showToast('Help center coming soon!', 'success'); }}>
+                <button className="dropdown-item" onClick={() => {
+                  setShowHelpModal(true);
+                  setShowUserMenu(false);
+                }}>
                   <span>❓</span> Help & Support
                 </button>
                 
                 <div className="dropdown-divider"></div>
                 
-                <button className="dropdown-item logout-item" onClick={() => { setShowUserMenu(false); onLogout(); }}>
+                <button className="dropdown-item logout-item" onClick={onLogout}>
                   <span>🚪</span> Logout
                 </button>
               </div>
@@ -480,57 +576,35 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
           <p>Here's your financial overview</p>
         </div>
 
-        {/* 🆕 Usage Indicator for Free Users */}
+        {/* Show usage info for free users */}
         {!isPremium && usageInfo && (
           <div style={{
             padding: '1rem',
-            background: usageInfo.remaining <= 2 ? '#fef3c7' : '#f0f9ff',
-            borderRadius: '8px',
-            marginBottom: '1rem',
-            border: `2px solid ${usageInfo.remaining <= 2 ? '#f59e0b' : '#3b82f6'}`
+            background: '#fef3c7',
+            borderRadius: '10px',
+            marginBottom: '1.5rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div>
-                <strong>Monthly Transactions:</strong> {usageInfo.used} / {usageInfo.limit}
-                {usageInfo.remaining <= 2 && (
-                  <span style={{ color: '#f59e0b', marginLeft: '0.5rem' }}>
-                    ⚠️ Only {usageInfo.remaining} left!
-                  </span>
-                )}
-              </div>
-              <button 
-                onClick={onBuyPremium}
-                style={{
-                  padding: '0.5rem 1rem',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontWeight: 600
-                }}
-              >
-                Unlock Unlimited
-              </button>
-            </div>
-            
-            {/* Progress Bar */}
-            <div style={{
-              marginTop: '0.5rem',
-              height: '8px',
-              background: '#e5e7eb',
-              borderRadius: '4px',
-              overflow: 'hidden'
-            }}>
-              <div style={{
-                height: '100%',
-                width: `${(usageInfo.used / usageInfo.limit) * 100}%`,
-                background: usageInfo.remaining <= 2 
-                  ? 'linear-gradient(90deg, #f59e0b, #ef4444)' 
-                  : 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
-                transition: 'width 0.3s ease'
-              }} />
-            </div>
+            <span>
+              📊 Free Tier: {usageInfo.used}/{usageInfo.limit} transactions this month
+              ({usageInfo.remaining} remaining)
+            </span>
+            <button 
+              onClick={onBuyPremium}
+              style={{
+                padding: '0.5rem 1rem',
+                background: '#667eea',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 600
+              }}
+            >
+              ⭐ Upgrade
+            </button>
           </div>
         )}
 
@@ -538,7 +612,10 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
           <div className="empty-state">
             <h2>📊 No transactions yet</h2>
             <p>Start by adding your first income, expense, or savings transaction!</p>
-            <button className="action-btn" onClick={() => setShowTransactionModal(true)}>
+            <button 
+              className="action-btn"
+              onClick={() => setShowTransactionModal(true)}
+            >
               ➕ Add Your First Transaction
             </button>
           </div>
@@ -546,114 +623,83 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
           <>
             <div className="balance-card">
               <h3>Total Balance</h3>
-              <h1 className="balance-amount">₹{financialData.totalBalance.toLocaleString()}</h1>
+              <h1 className="balance-amount">{formatCurrency(financialData.totalBalance)}</h1>
               <p className="growth-indicator">
                 Based on {transactions.length} transaction{transactions.length > 1 ? 's' : ''}
               </p>
             </div>
 
+            {/* Budget Alerts Component */}
+            <BudgetAlerts 
+              budgetProgress={budgetProgress}
+              onViewBudget={() => setShowBudgetModal(true)}
+            />
+
             <div className="stats-grid">
-              <div className="stat-card income">
+              <div className="stat-card">
                 <div className="stat-icon">💵</div>
                 <div className="stat-info">
                   <p className="stat-label">Income</p>
-                  <h3>₹{financialData.income.toLocaleString()}</h3>
+                  <h3>{formatCurrency(financialData.income)}</h3>
                 </div>
               </div>
 
-              <div className="stat-card expenses">
+              <div className="stat-card">
                 <div className="stat-icon">💳</div>
                 <div className="stat-info">
                   <p className="stat-label">Expenses</p>
-                  <h3>₹{financialData.expenses.toLocaleString()}</h3>
+                  <h3>{formatCurrency(financialData.expenses)}</h3>
                 </div>
               </div>
 
-              <div className="stat-card savings">
+              <div className="stat-card">
                 <div className="stat-icon">💰</div>
                 <div className="stat-info">
                   <p className="stat-label">Savings</p>
-                  <h3>₹{financialData.savings.toLocaleString()}</h3>
+                  <h3>{formatCurrency(financialData.savings)}</h3>
                 </div>
               </div>
             </div>
-
-            {/* Budget Overview */}
-            {Object.values(budgets).some(b => b > 0) && (
-              <div className="budget-overview">
-                <div className="budget-header-section">
-                  <h2>📊 Budget Tracking</h2>
-                  <button className="edit-budget-btn" onClick={() => setShowBudgetModal(true)}>
-                    ✏️ Edit Budgets
-                  </button>
-                </div>
-                <div className="budget-cards">
-                  {Object.keys(budgets).filter(cat => budgets[cat] > 0).map(category => {
-                    const progress = budgetProgress[category];
-                    const isOverBudget = progress.percentage > 100;
-                    return (
-                      <div key={category} className={`budget-card ${isOverBudget ? 'over-budget' : ''}`}>
-                        <div className="budget-card-header">
-                          <span className="budget-category">
-                            {category === 'food' && '🍔 Food'}
-                            {category === 'transport' && '🚗 Transport'}
-                            {category === 'shopping' && '🛍️ Shopping'}
-                            {category === 'bills' && '💡 Bills'}
-                            {category === 'other' && '📦 Other'}
-                          </span>
-                          <span className={`budget-status ${isOverBudget ? 'over' : 'under'}`}>
-                            {progress.percentage.toFixed(0)}%
-                          </span>
-                        </div>
-                        <div className="budget-amounts">
-                          <span>₹{progress.spent.toLocaleString()} / ₹{progress.budget.toLocaleString()}</span>
-                        </div>
-                        <div className="budget-progress-bar">
-                          <div 
-                            className="budget-fill"
-                            style={{ width: `${Math.min(progress.percentage, 100)}%` }}
-                          ></div>
-                        </div>
-                        {isOverBudget && (
-                          <div className="over-budget-warning">
-                            ⚠️ Over budget by ₹{(progress.spent - progress.budget).toLocaleString()}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
           </>
         )}
 
         <div className="features-section">
           <h2>Quick Actions</h2>
           <div className="quick-actions">
-            <button className="action-btn" onClick={() => setShowAnalytics(true)}>
+            <button 
+              className="action-btn"
+              onClick={() => setShowAnalytics(true)}
+            >
               📊 View Analytics
             </button>
-            <button className="action-btn" onClick={() => setShowTransactionModal(true)}>
+            <button 
+              className="action-btn"
+              onClick={() => setShowTransactionModal(true)}
+            >
               ➕ Add Transaction
             </button>
-            <button className="action-btn" onClick={() => setShowBudgetModal(true)}>
+            <button 
+              className="action-btn"
+              onClick={() => setShowBudgetModal(true)}
+            >
               🎯 Set Budget
             </button>
-            <button className="action-btn" onClick={() => setShowReports(true)}>
+            <button 
+              className="action-btn"
+              onClick={() => setShowReports(true)}
+            >
               📈 Reports
             </button>
           </div>
         </div>
 
-        {/* Transactions Section with Search & Filter */}
         {transactions.length > 0 && (
           <div className="transactions-section">
             <div className="transactions-header">
               <h2>Recent Transactions</h2>
               <div className="transaction-actions">
                 <button 
-                  className="export-btn" 
+                  className="export-btn"
                   onClick={exportToCSV}
                   disabled={isExporting}
                 >
@@ -662,23 +708,22 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
               </div>
             </div>
 
-            {/* Search & Filter Bar */}
             <div className="search-filter-bar">
               <div className="search-box">
                 <input
                   type="text"
+                  className="search-input"
                   placeholder="🔍 Search transactions..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="search-input"
                 />
               </div>
               
               <div className="filter-controls">
                 <select 
+                  className="filter-select"
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="filter-select"
                 >
                   <option value="all">All Types</option>
                   <option value="income">💵 Income</option>
@@ -687,17 +732,17 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
                 </select>
 
                 <select 
+                  className="filter-select"
                   value={filterCategory}
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="filter-select"
                 >
                   <option value="all">All Categories</option>
-                  <option value="food">🍔 Food</option>
-                  <option value="transport">🚗 Transport</option>
-                  <option value="shopping">🛍️ Shopping</option>
-                  <option value="bills">💡 Bills</option>
-                  <option value="salary">💰 Salary</option>
-                  <option value="other">📦 Other</option>
+                  <option value="food">{CATEGORY_ICONS.food} {CATEGORY_LABELS.food}</option>
+                  <option value="transport">{CATEGORY_ICONS.transport} {CATEGORY_LABELS.transport}</option>
+                  <option value="shopping">{CATEGORY_ICONS.shopping} {CATEGORY_LABELS.shopping}</option>
+                  <option value="bills">{CATEGORY_ICONS.bills} {CATEGORY_LABELS.bills}</option>
+                  <option value="salary">{CATEGORY_ICONS.salary} {CATEGORY_LABELS.salary}</option>
+                  <option value="other">{CATEGORY_ICONS.other} {CATEGORY_LABELS.other}</option>
                 </select>
 
                 {(searchQuery || filterType !== 'all' || filterCategory !== 'all') && (
@@ -715,393 +760,140 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
               </div>
             </div>
 
-            {/* Results Info */}
-            {filteredTransactions.length !== transactions.length && (
-              <div className="results-info">
-                Showing {filteredTransactions.length} of {transactions.length} transactions
-              </div>
-            )}
-
-            {/* Filtered Transactions List */}
             {filteredTransactions.length === 0 ? (
               <div className="no-results">
-                <p>No transactions found matching your filters.</p>
+                <p>No transactions match your filters</p>
               </div>
             ) : (
-              <div className="transactions-list">
-                {filteredTransactions.map((txn, index) => {
-                  const originalIndex = transactions.findIndex(t => t._id === txn._id);
-                  return (
+              <>
+                <p className="results-info">
+                  Showing {filteredTransactions.length} of {transactions.length} transactions
+                </p>
+                <div className="transactions-list">
+                  {filteredTransactions.map((txn, index) => (
                     <div key={txn._id || index} className={`transaction-item ${txn.type}`}>
                       <div className="txn-icon">
-                        {txn.type === 'income' && '💰'}
-                        {txn.type === 'expense' && '💳'}
-                        {txn.type === 'savings' && '🏦'}
+                        {txn.type === 'expense' ? CATEGORY_ICONS[txn.category] || '📦' : TYPE_ICONS[txn.type]}
                       </div>
                       <div className="txn-details">
                         <h4>{txn.description}</h4>
-                        <p>{txn.category} • {txn.date}</p>
+                        <p>
+                          {txn.type === 'expense' 
+                            ? (CATEGORY_LABELS[txn.category] || txn.category)
+                            : txn.category
+                          } • {formatDate(txn.date)}
+                        </p>
                       </div>
                       <div className={`txn-amount ${txn.type}`}>
                         {txn.type === 'income' && '+'}
                         {txn.type === 'expense' && '-'}
                         {txn.type === 'savings' && '→'}
-                        ₹{txn.amount.toLocaleString()}
+                        {formatCurrency(txn.amount)}
                       </div>
                       <button 
                         className="delete-btn" 
-                        onClick={() => handleDeleteTransaction(originalIndex)}
+                        onClick={() => handleDeleteTransaction(index)}
                         title="Delete transaction"
                       >
                         🗑️
                       </button>
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         )}
 
-        {/* Footer */}
-        <footer style={{
-          backgroundColor: 'var(--bg-secondary)',
-          padding: '20px 0',
-          marginTop: '60px',
-          borderTop: '1px solid var(--border-color)',
-          textAlign: 'center'
-        }}>
-          <div style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
-            <p>© {new Date().getFullYear()} PFM Dashboard. All rights reserved.</p>
-            <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'center', gap: '20px' }}>
-              <a href="#help" style={{ color: '#667eea', textDecoration: 'none' }}>Help</a>
-              <a href="#privacy" style={{ color: '#667eea', textDecoration: 'none' }}>Privacy</a>
-              <a href="#terms" style={{ color: '#667eea', textDecoration: 'none' }}>Terms</a>
+        {/* FOOTER */}
+        <footer className="dashboard-footer">
+          <div className="footer-content">
+            <p className="footer-text">
+              © {new Date().getFullYear()} PFM Dashboard. All rights reserved.
+            </p>
+            <div className="footer-links">
+              <a href="#help" className="footer-link">Help</a>
+              <a href="#privacy" className="footer-link">Privacy</a>
+              <a href="#terms" className="footer-link">Terms</a>
             </div>
           </div>
         </footer>
       </div>
 
-      {/* Toast Notification */}
-      {toast.show && (
-        <div className={`toast ${toast.type}`}>
-          {toast.type === 'success' && '✅ '}
-          {toast.type === 'error' && '❌ '}
-          {toast.message}
-        </div>
-      )}
+      {/* MODALS */}
+      <Toast 
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+      />
 
-      {/* 🆕 Limit Reached Modal */}
-      {showLimitModal && (
-        <div className="modal-overlay">
-          <div style={{
-            background: 'white',
-            padding: '2rem',
-            borderRadius: '15px',
-            maxWidth: '500px',
-            textAlign: 'center'
-          }}>
-            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔒</div>
-            <h2 style={{ marginBottom: '1rem', color: '#667eea' }}>
-              Monthly Limit Reached!
-            </h2>
-            <p style={{ marginBottom: '1.5rem', color: '#6b7280' }}>
-              You've used all <strong>10 free transactions</strong> this month.
-              Upgrade to Premium for unlimited transactions!
-            </p>
-            
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-              <button 
-                onClick={() => setShowLimitModal(false)}
-                style={{
-                  padding: '0.8rem 1.5rem',
-                  background: '#f3f4f6',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: 600
-                }}
-              >
-                Close
-              </button>
-              <button 
-                onClick={() => {
-                  setShowLimitModal(false);
-                  onBuyPremium();
-                }}
-                style={{
-                  padding: '0.8rem 1.5rem',
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontWeight: 600
-                }}
-              >
-                ⭐ Upgrade Now
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <LimitReachedModal
+        show={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        onUpgrade={onBuyPremium}
+      />
 
-      {/* Confirmation Modal */}
-      {confirmModal.show && (
-        <div className="modal-overlay">
-          <div className="modal-content confirmation-modal">
-            <div className="modal-header">
-              <h2>{confirmModal.title}</h2>
-            </div>
-            <div className="confirmation-body">
-              <div className="warning-icon">⚠️</div>
-              <p>{confirmModal.message}</p>
-            </div>
-            <div className="confirmation-actions">
-              <button 
-                className="cancel-btn" 
-                onClick={() => setConfirmModal({ show: false, title: '', message: '', onConfirm: null, isDeleting: false })}
-                disabled={confirmModal.isDeleting}
-              >
-                Cancel
-              </button>
-              <button 
-                className="confirm-btn danger" 
-                onClick={confirmModal.onConfirm}
-                disabled={confirmModal.isDeleting}
-              >
-                {confirmModal.isDeleting ? '⏳ Deleting...' : '🗑️ Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationModal
+        show={confirmModal.show}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        onConfirm={confirmModal.onConfirm}
+        onCancel={() => setConfirmModal({ show: false, title: '', message: '', onConfirm: null, isDeleting: false })}
+        isDeleting={confirmModal.isDeleting}
+      />
 
-      {/* Transaction Modal */}
-      {showTransactionModal && (
-        <div className="modal-overlay" onClick={() => setShowTransactionModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Add Transaction</h2>
-              <button className="close-btn" onClick={() => setShowTransactionModal(false)}>×</button>
-            </div>
-            <form onSubmit={handleTransactionSubmit}>
-              <div className="form-group">
-                <label>Type</label>
-                <div className="type-selector-three">
-                  <button
-                    type="button"
-                    className={`type-btn ${transactionForm.type === 'income' ? 'active income' : ''}`}
-                    onClick={() => setTransactionForm({...transactionForm, type: 'income'})}
-                  >
-                    💵 Income
-                  </button>
-                  <button
-                    type="button"
-                    className={`type-btn ${transactionForm.type === 'expense' ? 'active expense' : ''}`}
-                    onClick={() => setTransactionForm({...transactionForm, type: 'expense'})}
-                  >
-                    💳 Expense
-                  </button>
-                  <button
-                    type="button"
-                    className={`type-btn ${transactionForm.type === 'savings' ? 'active savings' : ''}`}
-                    onClick={() => setTransactionForm({...transactionForm, type: 'savings'})}
-                  >
-                    💰 Savings
-                  </button>
-                </div>
-              </div>
+      <TransactionModal
+        show={showTransactionModal}
+        onClose={() => setShowTransactionModal(false)}
+        transactionForm={transactionForm}
+        setTransactionForm={setTransactionForm}
+        onSubmit={handleTransactionSubmit}
+      />
 
-              <div className="form-group">
-                <label>Amount (₹)</label>
-                <input
-                  type="number"
-                  value={transactionForm.amount}
-                  onChange={(e) => setTransactionForm({...transactionForm, amount: e.target.value})}
-                  placeholder="Enter amount"
-                  required
-                />
-              </div>
+      <BudgetModal
+        show={showBudgetModal}
+        onClose={() => setShowBudgetModal(false)}
+        budgets={budgets}
+        setBudgets={setBudgets}
+        budgetProgress={budgetProgress}
+        onSave={handleSetBudget}
+      />
 
-              <div className="form-group">
-                <label>Category</label>
-                <select
-                  value={transactionForm.category}
-                  onChange={(e) => setTransactionForm({...transactionForm, category: e.target.value})}
-                >
-                  <option value="food">🍔 Food</option>
-                  <option value="transport">🚗 Transport</option>
-                  <option value="shopping">🛍️ Shopping</option>
-                  <option value="bills">💡 Bills</option>
-                  <option value="salary">💰 Salary</option>
-                  <option value="other">📦 Other</option>
-                </select>
-              </div>
+      <AnalyticsModal
+        show={showAnalytics}
+        onClose={() => setShowAnalytics(false)}
+        analytics={analytics}
+        financialData={financialData}
+        transactionsCount={transactions.length}
+        transactions={transactions}
+      />
 
-              <div className="form-group">
-                <label>Description</label>
-                <input
-                  type="text"
-                  value={transactionForm.description}
-                  onChange={(e) => setTransactionForm({...transactionForm, description: e.target.value})}
-                  placeholder="What was this for?"
-                  required
-                />
-              </div>
+      <ReportsModal
+        show={showReports}
+        onClose={() => setShowReports(false)}
+        financialData={financialData}
+        transactionsCount={transactions.length}
+        onDownloadPDF={() => showToast('PDF download coming soon!', 'success')}
+      />
 
-              <button type="submit" className="submit-btn">Add Transaction</button>
-            </form>
-          </div>
-        </div>
-      )}
+      <ProfileModal
+        show={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+        userEmail={userEmail}
+        isPremium={isPremium}
+      />
 
-      {/* Budget Modal */}
-      {showBudgetModal && (
-        <div className="modal-overlay" onClick={() => setShowBudgetModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>🎯 Set Monthly Budget</h2>
-              <button className="close-btn" onClick={() => setShowBudgetModal(false)}>×</button>
-            </div>
-            
-            <div className="budget-form">
-              <p className="budget-description">
-                Set spending limits for each category to track your expenses better.
-              </p>
+      <SettingsModal
+        show={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        isDarkMode={isDarkMode}
+        toggleTheme={toggleTheme}
+      />
 
-              {Object.keys(budgets).map(category => (
-                <div key={category} className="budget-item">
-                  <div className="budget-header">
-                    <label>
-                      {category === 'food' && '🍔 Food'}
-                      {category === 'transport' && '🚗 Transport'}
-                      {category === 'shopping' && '🛍️ Shopping'}
-                      {category === 'bills' && '💡 Bills'}
-                      {category === 'other' && '📦 Other'}
-                    </label>
-                    <span className="budget-spent">
-                      Spent: ₹{budgetProgress[category]?.spent.toLocaleString() || 0}
-                    </span>
-                  </div>
-                  <input
-                    type="number"
-                    value={budgets[category]}
-                    onChange={(e) => setBudgets({
-                      ...budgets,
-                      [category]: parseFloat(e.target.value) || 0
-                    })}
-                    placeholder="Enter budget limit"
-                    className="budget-input"
-                  />
-                  {budgets[category] > 0 && (
-                    <div className="budget-progress">
-                      <div 
-                        className={`budget-bar ${budgetProgress[category]?.percentage > 100 ? 'over-budget' : ''}`}
-                        style={{ width: `${Math.min(budgetProgress[category]?.percentage || 0, 100)}%` }}
-                      ></div>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              <button onClick={handleSetBudget} className="submit-btn">
-                Save Budgets
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Analytics Modal */}
-      {showAnalytics && (
-        <div className="modal-overlay" onClick={() => setShowAnalytics(false)}>
-          <div className="modal-content large" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>📊 Financial Analytics</h2>
-              <button className="close-btn" onClick={() => setShowAnalytics(false)}>×</button>
-            </div>
-            <div className="analytics-content">
-              {!analytics || analytics.length === 0 ? (
-                <div className="empty-analytics">
-                  <h3>No expense data yet</h3>
-                  <p>Add some expense transactions to see analytics!</p>
-                </div>
-              ) : (
-                <div className="analytics-grid">
-                  <div className="analytics-card">
-                    <h3>Expense Breakdown</h3>
-                    <div className="pie-chart-placeholder">
-                      {analytics.map((item, idx) => (
-                        <p key={idx}>
-                          {item.category === 'food' && '🍔'}
-                          {item.category === 'transport' && '🚗'}
-                          {item.category === 'shopping' && '🛍️'}
-                          {item.category === 'bills' && '💡'}
-                          {item.category === 'other' && '📦'}
-                          {' '}{item.category.charAt(0).toUpperCase() + item.category.slice(1)}: {item.percentage}%
-                        </p>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="analytics-card">
-                    <h3>Summary</h3>
-                    <p>📊 Total Transactions: {transactions.length}</p>
-                    <p>💰 Total Income: ₹{financialData.income.toLocaleString()}</p>
-                    <p>💳 Total Expenses: ₹{financialData.expenses.toLocaleString()}</p>
-                    <p>🏦 Total Savings: ₹{financialData.savings.toLocaleString()}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Reports Modal */}
-      {showReports && (
-        <div className="modal-overlay" onClick={() => setShowReports(false)}>
-          <div className="modal-content large" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>📈 Financial Reports</h2>
-              <button className="close-btn" onClick={() => setShowReports(false)}>×</button>
-            </div>
-            <div className="reports-content">
-              {transactions.length === 0 ? (
-                <div className="empty-analytics">
-                  <h3>No transaction data</h3>
-                  <p>Add transactions to generate reports!</p>
-                </div>
-              ) : (
-                <>
-                  <h3>Current Month Summary</h3>
-                  <table className="report-table">
-                    <thead>
-                      <tr>
-                        <th>Month</th>
-                        <th>Income</th>
-                        <th>Expenses</th>
-                        <th>Savings</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td>October 2025</td>
-                        <td className="income">₹{financialData.income.toLocaleString()}</td>
-                        <td className="expense">₹{financialData.expenses.toLocaleString()}</td>
-                        <td className="savings">₹{financialData.savings.toLocaleString()}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <button className="download-btn" onClick={() => showToast('PDF download coming soon!', 'success')}>
-                    📥 Download Report (PDF)
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <HelpModal
+        show={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+      />
     </div>
   );
 };

@@ -1,0 +1,31 @@
+/* ========== CSS VARIABLES ========== */
+:root {
+  /* Colors */
+  --primary: #667eea;
+  --primary-dark: #5568d3;
+  --secondary: #764ba2;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #ffc107;
+  --info: #3b82f6;
+  
+  /* Light Theme */
+  --bg-primary: #f5f5f5;
+  --bg-secondary: #e0e0e0;
+  --bg-card: #ffffff;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --border-color: #e0e0e0;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --bg-card: #252525;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --border-color: #3d3d3d;
+  --shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
