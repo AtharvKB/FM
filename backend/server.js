@@ -2,26 +2,25 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const helmet = require('helmet'); // ✅ Security headers
-const rateLimit = require('express-rate-limit'); // ✅ Rate limiting
-const mongoSanitize = require('express-mongo-sanitize'); // ✅ Prevent NoSQL injection
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 
 const app = express();
 
 // ========================================
-// SECURITY MIDDLEWARE (Add BEFORE other middleware)
+// SECURITY MIDDLEWARE
 // ========================================
 
-// ✅ Security headers (helmet)
+// Security headers
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable for development (enable in production)
+  contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
 }));
 
-// ✅ Rate limiting - Global (100 requests per 15 minutes)
+// Rate limiting definitions
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Max 100 requests per 15 minutes per IP
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again after 15 minutes.'
@@ -30,11 +29,10 @@ const globalLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// ✅ Strict rate limiting for auth routes (5 attempts per 15 minutes)
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // Max 5 login/register attempts per 15 minutes
-  skipSuccessfulRequests: true, // Don't count successful requests
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  skipSuccessfulRequests: true,
   message: {
     success: false,
     message: 'Too many authentication attempts, please try again after 15 minutes.'
@@ -43,7 +41,6 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// ✅ Medium rate limiting for transactions (20 per 15 minutes)
 const transactionLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -53,26 +50,43 @@ const transactionLimiter = rateLimit({
   }
 });
 
-// Apply global rate limiter to all routes
-app.use(globalLimiter);
-
-// ✅ Prevent NoSQL injection
-app.use(mongoSanitize());
-
 // ========================================
 // STANDARD MIDDLEWARE
 // ========================================
 
 // CORS Configuration
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+];
+
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      console.warn('⚠️ CORS blocked:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(express.json({ limit: '10mb' })); // ✅ Limit payload size
+// Body Parsers
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Global Rate Limiter
+app.use(globalLimiter);
 
 // ========================================
 // DATABASE CONNECTION
@@ -86,20 +100,20 @@ mongoose.connect(uri, {
   .then(() => console.log('✅ MongoDB connected'))
   .catch(err => {
     console.error('❌ MongoDB connection error:', err);
-    process.exit(1); // Exit if DB connection fails
+    process.exit(1);
   });
 
 // ========================================
 // ROUTES
 // ========================================
 
-// Authentication Routes (Public) - With strict rate limiting
+// Authentication Routes
 const authRoutes = require('./routes/auth');
-app.use('/api/auth', authLimiter, authRoutes); // ✅ Add rate limiter
+app.use('/api/auth', authLimiter, authRoutes);
 
-// Transaction Routes (Protected with JWT) - With medium rate limiting
+// Transaction Routes
 const transactionRoutes = require('./routes/transactions');
-app.use('/api/transactions', transactionLimiter, transactionRoutes); // ✅ Add rate limiter
+app.use('/api/transactions', transactionLimiter, transactionRoutes);
 
 // Payment Routes
 const paymentRoutes = require('./routes/payment');
@@ -208,8 +222,7 @@ app.get('/', (req, res) => {
     security: {
       rateLimit: 'enabled',
       helmet: 'enabled',
-      cors: 'enabled',
-      mongoSanitize: 'enabled'
+      cors: 'enabled'
     },
     endpoints: {
       auth: {
@@ -295,28 +308,21 @@ app.listen(PORT, () => {
   console.log('\n✅ Security Features:');
   console.log('   🛡️  Helmet.js - Security Headers');
   console.log('   ⏱️  Rate Limiting - Enabled');
-  console.log('   🚫 NoSQL Injection Protection - Enabled');
   console.log('   🔐 CORS - Configured');
+  console.log('   🛡️  Mongoose - Built-in NoSQL Protection');
   console.log('\n✅ Available endpoints:');
   console.log('\n   🔓 Public Routes:');
   console.log('      - POST /api/auth/register (Rate: 5/15min)');
   console.log('      - POST /api/auth/login (Rate: 5/15min)');
   console.log('      - POST /api/auth/forgot-password');
-  console.log('      - POST /api/auth/verify-security-answer');
-  console.log('      - POST /api/auth/reset-password');
   console.log('\n   🔒 Protected Routes (JWT Required):');
   console.log('      - GET /api/transactions (Rate: 20/15min)');
   console.log('      - POST /api/transactions (Rate: 20/15min)');
   console.log('      - PUT /api/transactions/:id');
   console.log('      - DELETE /api/transactions/:id');
-  console.log('      - DELETE /api/transactions/all/:email');
   console.log('\n   💳 Payment Routes:');
   console.log('      - POST /api/payment/create-order');
   console.log('      - POST /api/payment/verify-payment');
-  console.log('      - GET /api/payment/premium-status/:email');
-  console.log('\n   📊 Legacy/Utility Routes:');
-  console.log('      - GET /api/financial-data/:email');
-  console.log('      - GET /api/usage/:email');
   console.log('\n   🏥 Health Check:');
   console.log('      - GET /health');
   console.log('\n');
