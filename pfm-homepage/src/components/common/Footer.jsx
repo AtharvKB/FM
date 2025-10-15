@@ -1,10 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PolicyModal from './PolicyModal';
 import './Footer.css'
 
 const Footer = () => {
   const [showModal, setShowModal] = useState(false);
   const [modalContent, setModalContent] = useState({ title: '', content: null });
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Detect theme changes
+  useEffect(() => {
+    const checkTheme = () => {
+      const theme = document.body.getAttribute('data-theme');
+      setIsDarkMode(theme === 'dark');
+    };
+
+    checkTheme();
+    
+    // Watch for theme changes
+    const observer = new MutationObserver(checkTheme);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-theme'] });
+
+    return () => observer.disconnect();
+  }, []);
 
   const openModal = (type) => {
     let title = '';
@@ -180,7 +197,19 @@ const Footer = () => {
       <footer className="footer">
         <div className="footer-content">
           <div className="footer-section">
-            <h3>💰 Financial Management</h3>
+            <h3 
+              style={{
+                fontSize: '1.5rem',
+                marginBottom: '1rem',
+                color: isDarkMode ? '#f1f5f9' : '#1a202c',
+                fontWeight: 900,
+                background: 'none',
+                WebkitBackgroundClip: 'initial',
+                WebkitTextFillColor: isDarkMode ? '#f1f5f9' : '#1a202c'
+              }}
+            >
+              💰 Financial Management
+            </h3>
             <p>Smart budgeting made simple</p>
           </div>
 

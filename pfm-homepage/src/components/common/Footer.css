@@ -1,57 +1,195 @@
+/* ========================================
+   HOMEPAGE FOOTER - Light Mode
+   🌞 Footer Fix for Homepage
+   ======================================== */
+
+/* Footer - Default (Dark) */
 .footer {
   background: #1e293b;
-  color: white;
-  padding: 3rem 2rem 1rem;
+  padding: 4rem 2rem 2rem;
+  color: #94a3b8;
+  border-top: 1px solid #334155;
 }
 
-.footer-content {
+.footer-container {
   max-width: 1200px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 2rem;
-  margin-bottom: 2rem;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: 3rem;
+}
+
+.footer-brand h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #f1f5f9;
+  font-weight: 900;
+}
+
+.footer-description {
+  color: #94a3b8;
+  line-height: 1.8;
 }
 
 .footer-section h4 {
-  font-size: 1.2rem;
-  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  margin-bottom: 1.5rem;
+  color: #f1f5f9;
+  font-weight: 700;
 }
 
-.footer-section p {
-  color: #94a3b8;
-  line-height: 1.6;
+.footer-links {
+  list-style: none;
 }
 
-.footer-section a {
-  display: block;
+.footer-links li {
+  margin-bottom: 0.8rem;
+}
+
+.footer-links a {
   color: #94a3b8;
   text-decoration: none;
-  margin-bottom: 0.5rem;
   transition: color 0.3s;
-  cursor: pointer;
 }
 
-.footer-section a:hover {
-  color: #6366f1;
-}
-
-.social-links {
-  display: flex;
-  gap: 1rem;
+.footer-links a:hover {
+  color: #667eea;
 }
 
 .footer-bottom {
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 3rem auto 0;
   padding-top: 2rem;
   border-top: 1px solid #334155;
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-copyright {
   color: #94a3b8;
 }
 
+.footer-social {
+  display: flex;
+  gap: 1rem;
+}
+
+.social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  color: #94a3b8;
+  transition: all 0.3s;
+}
+
+.social-link:hover {
+  background: #667eea;
+  color: white;
+  transform: translateY(-3px);
+}
+
+/* ========================================
+   LIGHT MODE OVERRIDE - Homepage Footer
+   ======================================== */
+
+body:not([data-theme="dark"]) .footer {
+  background: #ffffff !important;
+  color: #1a202c !important;
+  border-top: 2px solid #e2e8f0 !important;
+}
+
+body:not([data-theme="dark"]) .footer-brand h3,
+body:not([data-theme="dark"]) .footer-section h4 {
+  color: #1a202c !important;
+}
+
+body:not([data-theme="dark"]) .footer-description,
+body:not([data-theme="dark"]) .footer-links a,
+body:not([data-theme="dark"]) .footer-copyright {
+  color: #64748b !important;
+}
+
+body:not([data-theme="dark"]) .footer-links a:hover {
+  color: #667eea !important;
+}
+
+body:not([data-theme="dark"]) .footer-bottom {
+  border-top-color: #e2e8f0 !important;
+}
+
+body:not([data-theme="dark"]) .social-link {
+  background: #f8fafc !important;
+  color: #64748b !important;
+  border: 2px solid #e2e8f0 !important;
+}
+
+body:not([data-theme="dark"]) .social-link:hover {
+  background: var(--gradient-purple) !important;
+  color: white !important;
+  border-color: transparent !important;
+}
+
 @media (max-width: 768px) {
-  .footer-content {
-    grid-template-columns: repeat(2, 1fr);
+  .footer-container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
   }
+
+  .footer-bottom {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+}
+
+/* =====================================
+   🔥 DARK MODE FIX - Footer Brand Name
+   ✅ ALWAYS VISIBLE IN DARK MODE
+   ====================================== */
+body[data-theme="dark"] .footer-brand h3 {
+  color: #f1f5f9 !important;
+  font-weight: 900 !important;
+  background: none !important;
+  background-image: none !important;
+  -webkit-background-clip: initial !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+  opacity: 1 !important;
+}
+/* =====================================
+   🔥 LEGAL SECTION LINKS - BOTH MODES
+   ✅ Better contrast and styling
+   ====================================== */
+
+/* Legal section links - Dark Mode */
+body[data-theme="dark"] .footer-section ul li a {
+  color: #8b9cf6 !important;
+}
+
+body[data-theme="dark"] .footer-section ul li a:hover {
+  color: #a78bfa !important;
+  text-decoration: underline;
+}
+
+/* Legal section links - Light Mode */
+body:not([data-theme="dark"]) .footer-section ul li a {
+  color: #667eea !important;
+}
+
+body:not([data-theme="dark"]) .footer-section ul li a:hover {
+  color: #764ba2 !important;
+  text-decoration: underline;
+}
+
+/* Footer headings - ensure visibility */
+body[data-theme="dark"] .footer-section h4 {
+  color: #f1f5f9 !important;
+}
+
+body:not([data-theme="dark"]) .footer-section h4 {
+  color: #1a202c !important;
 }

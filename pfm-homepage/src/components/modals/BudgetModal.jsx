@@ -12,6 +12,18 @@ const BudgetModal = ({
 }) => {
   if (!show) return null;
 
+  // Get theme from dashboard
+  const isDarkMode = document.querySelector('.dashboard-page')?.getAttribute('data-theme') === 'dark';
+
+  // Theme colors
+  const themeStyles = {
+    modalBg: isDarkMode ? '#1e293b' : '#ffffff',
+    textPrimary: isDarkMode ? '#f1f5f9' : '#1a202c',
+    textSecondary: isDarkMode ? '#94a3b8' : '#64748b',
+    cardBg: isDarkMode ? '#2d3748' : '#f8f9fa',
+    borderColor: isDarkMode ? '#334155' : '#e2e8f0',
+  };
+
   // 🆕 Enhanced: Use constants for budget status
   const getBudgetStatus = (percentage) => {
     if (percentage >= 100) return BUDGET_STATUS_CONFIG.EXCEEDED;
@@ -29,14 +41,21 @@ const BudgetModal = ({
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>🎯 Set Monthly Budget</h2>
+      <div 
+        className="modal-content" 
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: themeStyles.modalBg,
+          color: themeStyles.textPrimary
+        }}
+      >
+        <div className="modal-header" style={{ color: themeStyles.textPrimary }}>
+          <h2 style={{ color: themeStyles.textPrimary }}>🎯 Set Monthly Budget</h2>
           <button className="close-btn" onClick={onClose}>×</button>
         </div>
         
         <div className="budget-form">
-          <p className="budget-description">
+          <p className="budget-description" style={{ color: themeStyles.textSecondary }}>
             Set spending limits for each category to track your expenses better.
           </p>
 
@@ -45,13 +64,20 @@ const BudgetModal = ({
             const status = getBudgetStatus(progress.percentage);
             
             return (
-              <div key={category} className="budget-item">
+              <div 
+                key={category} 
+                className="budget-item"
+                style={{ 
+                  background: themeStyles.cardBg,
+                  borderColor: themeStyles.borderColor 
+                }}
+              >
                 <div className="budget-header">
-                  <label>
+                  <label style={{ color: themeStyles.textPrimary }}>
                     {CATEGORY_ICONS[category]} {CATEGORY_LABELS[category] || category.charAt(0).toUpperCase() + category.slice(1)}
                   </label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                    <span className="budget-spent">
+                    <span className="budget-spent" style={{ color: themeStyles.textSecondary }}>
                       Spent: {formatCurrency(progress.spent)}
                     </span>
                     {budgets[category] > 0 && (
@@ -86,11 +112,16 @@ const BudgetModal = ({
                   className="budget-input"
                   min="0"
                   step="100"
+                  style={{
+                    background: isDarkMode ? '#1e293b' : '#ffffff',
+                    color: themeStyles.textPrimary,
+                    borderColor: themeStyles.borderColor
+                  }}
                 />
                 
                 {budgets[category] > 0 && (
                   <>
-                    <div className="budget-progress">
+                    <div className="budget-progress" style={{ background: isDarkMode ? '#1e293b' : '#e2e8f0' }}>
                       <div 
                         className="budget-bar"
                         style={{ 
@@ -127,20 +158,23 @@ const BudgetModal = ({
           })}
 
           {/* Budget Summary */}
-          <div className="budget-summary">
-            <div className="summary-item">
+          <div className="budget-summary" style={{ 
+            background: themeStyles.cardBg,
+            borderColor: themeStyles.borderColor 
+          }}>
+            <div className="summary-item" style={{ color: themeStyles.textPrimary }}>
               <span>Total Budget Set:</span>
               <strong>{formatCurrency(totalBudget)}</strong>
             </div>
             
-            <div className="summary-item">
+            <div className="summary-item" style={{ color: themeStyles.textPrimary }}>
               <span>Total Spent:</span>
               <strong style={{ color: '#ef4444' }}>
                 {formatCurrency(totalSpent)}
               </strong>
             </div>
             
-            <div className="summary-item">
+            <div className="summary-item" style={{ color: themeStyles.textPrimary }}>
               <span>
                 {noBudget ? 'No Budget Set' : isOverBudget ? 'Over Budget By:' : 'Total Remaining:'}
               </span>
@@ -153,7 +187,7 @@ const BudgetModal = ({
 
             {/* Status Messages */}
             {noBudget && (
-              <div className="budget-alert info">
+              <div className="budget-alert info" style={{ color: themeStyles.textPrimary }}>
                 ⚠️ Set budgets above to track your spending!
               </div>
             )}

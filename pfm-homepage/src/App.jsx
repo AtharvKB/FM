@@ -15,6 +15,7 @@ import './styles/global.css';
 import './styles/auth.css';
 
 function App() {
+  
   const [currentView, setCurrentView] = useState('home');
   const [loggedInUser, setLoggedInUser] = useState(null);
   const [isPremiumFlow, setIsPremiumFlow] = useState(false);

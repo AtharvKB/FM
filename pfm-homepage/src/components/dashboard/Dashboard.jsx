@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import { TYPE_ICONS, CATEGORY_ICONS, CATEGORY_LABELS } from '../../utils/constants';
-import { transactionsAPI } from '../../services/api'; // ✅ ADD THIS
+import { transactionsAPI } from '../../services/api';
 import BudgetAlerts from './BudgetAlerts';
 
 // Import your existing modals
@@ -59,8 +59,9 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     category: 'food'
   });
 
+  // ✅ FIXED: Theme state with proper localStorage key
   const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('theme');
+    const saved = localStorage.getItem('dashboard-theme');
     return saved === 'dark';
   });
   
@@ -79,16 +80,16 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
 
   const [isExporting, setIsExporting] = useState(false);
 
-  // Dark mode effect
+  // ✅ FIXED: Dark mode effect with proper attribute handling
   useEffect(() => {
-    localStorage.setItem('theme', isDarkMode ? 'dark' : 'light');
+    localStorage.setItem('dashboard-theme', isDarkMode ? 'dark' : 'light');
     
     const dashboardElement = document.querySelector('.dashboard-page');
     if (dashboardElement) {
       if (isDarkMode) {
         dashboardElement.setAttribute('data-theme', 'dark');
       } else {
-        dashboardElement.removeAttribute('data-theme');
+        dashboardElement.setAttribute('data-theme', 'light');
       }
     }
   }, [isDarkMode]);
@@ -118,20 +119,17 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     }
   };
 
-  // ✅ UPDATED: Fetch transactions using API service with JWT
   const fetchFinancialData = async () => {
     try {
       setIsLoading(true);
       setError(null);
 
-      // ✅ Use API service instead of direct fetch
       const result = await transactionsAPI.getAll();
       
       if (result.success && result.data) {
         const fetchedTransactions = result.data;
         setTransactions(fetchedTransactions);
 
-        // ✅ Calculate financial data from transactions
         const calculated = {
           income: 0,
           expenses: 0,
@@ -160,7 +158,6 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     } catch (err) {
       console.error('Error fetching transactions:', err);
       
-      // ✅ Handle authentication errors
       if (err.response?.status === 401) {
         setError('Session expired. Please login again.');
         setTimeout(() => {
@@ -229,7 +226,6 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     }, 1000);
   };
 
-  // Check for budget warnings
   const checkBudgetWarnings = (category, newSpent) => {
     const budget = budgets[category];
     if (budget === 0) return;
@@ -244,7 +240,6 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     }
   };
 
-  // ✅ UPDATED: Add transaction using API service with JWT
   const handleTransactionSubmit = async (e) => {
     e.preventDefault();
     
@@ -254,7 +249,6 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     }
 
     try {
-      // ✅ Use API service instead of direct fetch
       const result = await transactionsAPI.create({
         email: userEmail,
         type: transactionForm.type,
@@ -268,7 +262,6 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
         const newTransaction = result.data;
         const amountNum = parseFloat(transactionForm.amount);
 
-        // ✅ Update financial data
         setFinancialData(prev => {
           const newData = { ...prev };
           
@@ -286,10 +279,8 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
           return newData;
         });
 
-        // ✅ Add new transaction to list
         setTransactions(prev => [newTransaction, ...prev]);
 
-        // Check budget warnings for expenses
         if (transactionForm.type === 'expense') {
           const category = transactionForm.category;
           const currentSpent = transactions
@@ -306,7 +297,6 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     } catch (error) {
       console.error('Error adding transaction:', error);
       
-      // ✅ Handle specific errors
       if (error.response?.status === 401) {
         showToast('Session expired. Please login again.', 'error');
         setTimeout(() => {
@@ -332,7 +322,6 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
     });
   };
 
-  // ✅ UPDATED: Delete transaction using API service with JWT
   const handleDeleteTransaction = (index) => {
     const txn = transactions[index];
     
@@ -349,13 +338,11 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
         }
 
         try {
-          // ✅ Use API service instead of direct fetch
           const result = await transactionsAPI.delete(txn._id);
           
           if (result.success) {
             const amountNum = txn.amount;
 
-            // ✅ Update financial data
             setFinancialData(prev => {
               const newData = { ...prev };
               
@@ -373,14 +360,12 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
               return newData;
             });
 
-            // ✅ Remove transaction from list
             setTransactions(prev => prev.filter((_, i) => i !== index));
             showToast('Transaction deleted successfully!', 'success');
           }
         } catch (error) {
           console.error('Error deleting transaction:', error);
           
-          // ✅ Handle authentication errors
           if (error.response?.status === 401) {
             showToast('Session expired. Please login again.', 'error');
             setTimeout(() => {
@@ -445,7 +430,7 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
 
   if (isLoading) {
     return (
-      <div className="dashboard-page">
+      <div className="dashboard-page" data-theme={isDarkMode ? 'dark' : 'light'}>
         <div className="loading-screen">
           <div className="loading-spinner"></div>
           <h2>Loading your financial data... 💰</h2>
@@ -455,7 +440,7 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
   }
 
   return (
-    <div className="dashboard-page">
+    <div className="dashboard-page" data-theme={isDarkMode ? 'dark' : 'light'}>
       {/* NAVBAR */}
       <nav className="dashboard-nav">
         <div className="nav-brand">
@@ -502,6 +487,7 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
           <button 
             className="theme-toggle" 
             onClick={toggleTheme}
+            title={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
           >
             {isDarkMode ? '☀️' : '🌙'}
           </button>
@@ -576,7 +562,6 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
           <p>Here's your financial overview</p>
         </div>
 
-        {/* Show usage info for free users */}
         {!isPremium && usageInfo && (
           <div style={{
             padding: '1rem',
@@ -629,7 +614,6 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
               </p>
             </div>
 
-            {/* Budget Alerts Component */}
             <BudgetAlerts 
               budgetProgress={budgetProgress}
               onViewBudget={() => setShowBudgetModal(true)}
@@ -805,7 +789,6 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
           </div>
         )}
 
-        {/* FOOTER */}
         <footer className="dashboard-footer">
           <div className="footer-content">
             <p className="footer-text">

@@ -100,6 +100,14 @@
   font-weight: 600;
 }
 
+.policy-modal-body h4 {
+  color: #374151;
+  font-size: 1rem;
+  margin-top: 1.2rem;
+  margin-bottom: 0.6rem;
+  font-weight: 600;
+}
+
 .policy-modal-body p {
   margin-bottom: 1rem;
 }
@@ -145,6 +153,70 @@
 
 .policy-modal-btn:active {
   transform: translateY(0);
+}
+
+/* ========================================
+   🌙 DARK MODE - Policy Modal
+   ======================================== */
+
+body[data-theme="dark"] .policy-modal-overlay {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+body[data-theme="dark"] .policy-modal-content {
+  background: #1e293b;
+  border: 2px solid #334155;
+}
+
+body[data-theme="dark"] .policy-modal-header {
+  border-bottom-color: #334155;
+  background: #0f172a;
+}
+
+body[data-theme="dark"] .policy-modal-header h2 {
+  color: #f1f5f9;
+}
+
+body[data-theme="dark"] .policy-modal-close {
+  color: #94a3b8;
+}
+
+body[data-theme="dark"] .policy-modal-close:hover {
+  background: #334155;
+  color: #f1f5f9;
+}
+
+body[data-theme="dark"] .policy-modal-body {
+  color: #94a3b8;
+  background: #1e293b;
+}
+
+body[data-theme="dark"] .policy-modal-body h3 {
+  color: #f1f5f9;
+}
+
+body[data-theme="dark"] .policy-modal-body h4 {
+  color: #e2e8f0;
+}
+
+body[data-theme="dark"] .policy-modal-body strong {
+  color: #f1f5f9;
+}
+
+body[data-theme="dark"] .policy-modal-body p,
+body[data-theme="dark"] .policy-modal-body li {
+  color: #94a3b8;
+}
+
+body[data-theme="dark"] .policy-modal-footer {
+  border-top-color: #334155;
+  background: #0f172a;
+}
+
+/* Keep button gradient in dark mode */
+body[data-theme="dark"] .policy-modal-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
 }
 
 /* Responsive */

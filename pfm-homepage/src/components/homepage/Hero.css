@@ -1,9 +1,32 @@
+/* ========================================
+   MODERN HERO SECTION - Crystal Clear Buttons
+   🔥 Premium Landing Page with Perfect Contrast
+   ======================================== */
+
 .hero-section {
-  padding: 80px 20px;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  min-height: 90vh;
+  padding: 100px 20px 80px;
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  min-height: 95vh;
   display: flex;
   align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Animated background pattern */
+.hero-section::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-image: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+  animation: float 20s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(30px, -30px); }
 }
 
 .hero-content {
@@ -11,195 +34,16 @@
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 60px;
+  gap: 80px;
   align-items: center;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-text {
   animation: fadeInLeft 0.8s ease-out;
 }
 
-.hero-title {
-  font-size: 3.5rem;
-  font-weight: 800;
-  line-height: 1.2;
-  margin-bottom: 1.5rem;
-  color: #1a1a2e;
-}
-
-.highlight {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.hero-description {
-  font-size: 1.2rem;
-  line-height: 1.8;
-  color: #4a5568;
-  margin-bottom: 2rem;
-}
-
-.hero-buttons {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 2rem;
-}
-
-.btn-primary,
-.btn-secondary {
-  padding: 1rem 2rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-}
-
-.btn-primary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
-}
-
-.btn-secondary {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
-}
-
-.btn-secondary:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 6px 25px rgba(245, 87, 108, 0.5);
-}
-
-.hero-features {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-}
-
-.feature-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.8rem 1.2rem;
-  background: white;
-  border-radius: 50px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  font-weight: 600;
-  color: #2d3748;
-  transition: transform 0.3s ease;
-}
-
-.feature-badge:hover {
-  transform: translateY(-2px);
-}
-
-.badge-icon {
-  font-size: 1.2rem;
-}
-
-/* Dashboard Preview */
-.hero-image {
-  animation: fadeInRight 0.8s ease-out;
-}
-
-.dashboard-preview {
-  background: white;
-  border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  transform: perspective(1000px) rotateY(-5deg);
-  transition: transform 0.5s ease;
-}
-
-.dashboard-preview:hover {
-  transform: perspective(1000px) rotateY(0deg);
-}
-
-.dashboard-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.dots {
-  color: #cbd5e0;
-  font-size: 1.2rem;
-  letter-spacing: 3px;
-}
-
-.dashboard-title {
-  font-weight: 600;
-  color: #667eea;
-  font-size: 1rem;
-}
-
-.balance-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2rem;
-  border-radius: 15px;
-  color: white;
-  margin-bottom: 1.5rem;
-}
-
-.balance-label {
-  font-size: 0.9rem;
-  opacity: 0.9;
-  margin-bottom: 0.5rem;
-}
-
-.balance-amount {
-  font-size: 2.5rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.balance-change {
-  font-size: 0.9rem;
-  opacity: 0.9;
-}
-
-.stats-row {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-}
-
-.stat-item {
-  text-align: center;
-  padding: 1rem;
-  background: #f7fafc;
-  border-radius: 10px;
-}
-
-.stat-label {
-  font-size: 0.85rem;
-  color: #718096;
-  margin-bottom: 0.5rem;
-}
-
-.stat-value {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: #2d3748;
-}
-
-/* Animations */
 @keyframes fadeInLeft {
   from {
     opacity: 0;
@@ -209,6 +53,118 @@
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+.hero-title {
+  font-size: 4rem;
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  color: white;
+  letter-spacing: -2px;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.highlight {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+}
+
+.hero-description {
+  font-size: 1.3rem;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 2.5rem;
+  font-weight: 600;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 1.2rem 2.5rem;
+  font-size: 1.2rem;
+  font-weight: 900 !important;
+  border: none !important;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  text-decoration: none;
+}
+
+/* ✅ Start Free Trial Button - White */
+.btn-primary {
+  background: white !important;
+  color: #5a67d8 !important;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  background: #f8f9fa !important;
+}
+
+/* ✅ Get Premium Button - Bright Pink */
+.btn-secondary {
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%) !important;
+  color: white !important;
+  box-shadow: 0 15px 40px rgba(236, 72, 153, 0.5);
+}
+
+.btn-secondary:hover {
+  transform: translateY(-5px) scale(1.05);
+  box-shadow: 0 20px 50px rgba(236, 72, 153, 0.7);
+  background: linear-gradient(135deg, #db2777 0%, #be185d 100%) !important;
+}
+
+.hero-features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+/* ✅ Feature Badges - Better Contrast */
+.feature-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 1rem 1.5rem;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(10px);
+  border-radius: 50px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  font-weight: 700;
+  color: white;
+  transition: all 0.3s ease;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.feature-badge:hover {
+  transform: translateY(-5px);
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.badge-icon {
+  font-size: 1.5rem;
+}
+
+/* Dashboard Preview */
+.hero-image {
+  animation: fadeInRight 0.8s ease-out;
 }
 
 @keyframes fadeInRight {
@@ -222,15 +178,115 @@
   }
 }
 
+.dashboard-preview {
+  background: white;
+  border-radius: 25px;
+  padding: 2rem;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+  transform: perspective(1000px) rotateY(-5deg);
+  transition: transform 0.5s ease;
+  border: 3px solid rgba(255, 255, 255, 0.6);
+}
+
+.dashboard-preview:hover {
+  transform: perspective(1000px) rotateY(0deg);
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.dots {
+  color: #cbd5e0;
+  font-size: 1.5rem;
+  letter-spacing: 5px;
+}
+
+.dashboard-title {
+  font-weight: 800;
+  color: #667eea;
+  font-size: 1.1rem;
+}
+
+.balance-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2.5rem;
+  border-radius: 20px;
+  color: white;
+  margin-bottom: 2rem;
+  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.5);
+}
+
+.balance-label {
+  font-size: 1rem;
+  opacity: 0.95;
+  margin-bottom: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.balance-amount {
+  font-size: 3rem;
+  font-weight: 900;
+  margin-bottom: 0.8rem;
+  letter-spacing: -2px;
+}
+
+.balance-change {
+  font-size: 1rem;
+  opacity: 0.95;
+  font-weight: 600;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+}
+
+.stat-item {
+  text-align: center;
+  padding: 1.5rem;
+  background: #f7fafc;
+  border-radius: 15px;
+  transition: transform 0.3s;
+  border: 2px solid #e2e8f0;
+}
+
+.stat-item:hover {
+  transform: translateY(-5px);
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: #718096;
+  margin-bottom: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #2d3748;
+  letter-spacing: -1px;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .hero-content {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 50px;
   }
 
   .hero-title {
-    font-size: 2.5rem;
+    font-size: 3rem;
   }
 
   .dashboard-preview {
@@ -240,16 +296,16 @@
 
 @media (max-width: 768px) {
   .hero-section {
-    padding: 60px 20px;
+    padding: 80px 20px 60px;
     min-height: auto;
   }
 
   .hero-title {
-    font-size: 2rem;
+    font-size: 2.5rem;
   }
 
   .hero-description {
-    font-size: 1rem;
+    font-size: 1.1rem;
   }
 
   .hero-buttons {
@@ -276,6 +332,90 @@
   }
 
   .balance-amount {
-    font-size: 2rem;
+    font-size: 2.5rem;
   }
+}
+
+/* ========================================
+   DARK MODE - HERO SECTION
+   🌙 Uses body[data-theme] for Homepage
+   ======================================== */
+
+body[data-theme="dark"] .hero-section {
+  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+}
+
+body[data-theme="dark"] .hero-section::before {
+  background-image: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 50%);
+}
+
+body[data-theme="dark"] .hero-title {
+  color: #f1f5f9;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Keep highlight gradient */
+body[data-theme="dark"] .highlight {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+body[data-theme="dark"] .hero-description {
+  color: rgba(241, 245, 249, 0.9);
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Buttons stay same (high contrast) */
+body[data-theme="dark"] .btn-primary {
+  background: white !important;
+  color: #5a67d8 !important;
+}
+
+body[data-theme="dark"] .btn-secondary {
+  background: linear-gradient(135deg, #ec4899 0%, #db2777 100%) !important;
+  color: white !important;
+}
+
+/* Feature Badges Dark Mode */
+body[data-theme="dark"] .feature-badge {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+body[data-theme="dark"] .feature-badge:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Dashboard Preview Dark Mode */
+body[data-theme="dark"] .dashboard-preview {
+  background: #1e293b;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+body[data-theme="dark"] .dashboard-header {
+  border-bottom-color: #334155;
+}
+
+body[data-theme="dark"] .dots {
+  color: #475569;
+}
+
+body[data-theme="dark"] .dashboard-title {
+  color: #8b9cf6;
+}
+
+body[data-theme="dark"] .stat-item {
+  background: #334155;
+  border-color: #475569;
+}
+
+body[data-theme="dark"] .stat-label {
+  color: #94a3b8;
+}
+
+body[data-theme="dark"] .stat-value {
+  color: #f1f5f9;
 }

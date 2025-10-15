@@ -1,5 +1,10 @@
+/* ========================================
+   MODERN FEATURES SECTION
+   🔥 Premium Features Display
+   ======================================== */
+
 .features-section {
-  padding: 80px 2rem;
+  padding: 100px 2rem;
   background: white;
 }
 
@@ -9,78 +14,88 @@
 }
 
 .section-title {
-  font-size: 2.5rem;
+  font-size: 3rem;
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   color: #1e293b;
+  font-weight: 900;
+  letter-spacing: -1px;
 }
 
 .section-subtitle {
   text-align: center;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   color: #64748b;
-  margin-bottom: 3rem;
+  margin-bottom: 4rem;
+  font-weight: 600;
 }
 
 .features-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
+  gap: 2.5rem;
 }
 
 .feature-card {
-  background: #f8fafc;
-  padding: 2rem;
-  border-radius: 12px;
+  background: white;
+  padding: 2.5rem;
+  border-radius: 25px;
   transition: all 0.3s;
+  border: 2px solid #e2e8f0;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
 }
 
 .feature-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-10px);
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.2);
+  border-color: #667eea;
 }
 
 .feature-icon {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: 3.5rem;
+  margin-bottom: 1.5rem;
+  display: block;
 }
 
 .feature-card h3 {
-  font-size: 1.3rem;
-  margin-bottom: 0.8rem;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
   color: #1e293b;
+  font-weight: 800;
 }
 
 .feature-card p {
   color: #64748b;
-  line-height: 1.6;
+  line-height: 1.8;
+  font-weight: 600;
 }
 
 /* About Section */
 .about-section {
-  padding: 80px 2rem;
+  padding: 100px 2rem;
   background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
 }
 
 .about-content {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
-  gap: 4rem;
+  gap: 5rem;
   align-items: center;
 }
 
 .about-description {
-  font-size: 1.05rem;
+  font-size: 1.1rem;
   color: #64748b;
-  line-height: 1.8;
-  margin-bottom: 1.5rem;
+  line-height: 1.9;
+  margin-bottom: 2rem;
+  font-weight: 600;
 }
 
 .about-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  margin-top: 2rem;
+  gap: 2.5rem;
+  margin-top: 3rem;
 }
 
 .stat-box {
@@ -88,28 +103,35 @@
 }
 
 .stat-number {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: #6366f1;
-  margin-bottom: 0.5rem;
+  font-size: 3rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 0.8rem;
+  letter-spacing: -2px;
 }
 
 .stat-text {
   font-size: 1rem;
   color: #64748b;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .about-card {
   background: white;
-  padding: 2rem;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  padding: 3rem;
+  border-radius: 25px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e2e8f0;
 }
 
 .about-card h3 {
-  font-size: 1.5rem;
-  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  margin-bottom: 2rem;
   color: #1e293b;
+  font-weight: 900;
 }
 
 .about-list {
@@ -117,10 +139,17 @@
 }
 
 .about-list li {
-  padding: 0.8rem 0;
+  padding: 1.2rem 0;
   color: #64748b;
-  font-size: 1.05rem;
-  border-bottom: 1px solid #e2e8f0;
+  font-size: 1.1rem;
+  border-bottom: 2px solid #e2e8f0;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.about-list li:hover {
+  color: #667eea;
+  transform: translateX(10px);
 }
 
 .about-list li:last-child {
@@ -129,205 +158,227 @@
 
 /* Pricing Section */
 .pricing-section {
-  padding: 80px 2rem;
+  padding: 100px 2rem;
   background: white;
 }
 
 .pricing-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  margin-top: 3rem;
+  gap: 2.5rem;
+  margin-top: 4rem;
 }
 
 .pricing-card {
   background: white;
   border: 2px solid #e2e8f0;
-  border-radius: 16px;
-  padding: 2.5rem;
+  border-radius: 25px;
+  padding: 3rem;
   position: relative;
   transition: all 0.3s;
 }
 
 .pricing-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+  transform: translateY(-10px);
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.15);
 }
 
 .pricing-card.popular {
-  border-color: #6366f1;
-  box-shadow: 0 8px 24px rgba(99, 102, 241, 0.2);
+  border-color: #667eea;
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+  transform: scale(1.05);
+}
+
+.pricing-card.popular:hover {
+  transform: scale(1.08) translateY(-10px);
 }
 
 .popular-badge {
   position: absolute;
-  top: -12px;
+  top: -15px;
   left: 50%;
   transform: translateX(-50%);
-  background: #6366f1;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 0.4rem 1.5rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
+  padding: 0.6rem 2rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
 .plan-header {
   text-align: center;
-  margin-bottom: 2rem;
-  padding-bottom: 2rem;
+  margin-bottom: 2.5rem;
+  padding-bottom: 2.5rem;
   border-bottom: 2px solid #e2e8f0;
 }
 
 .plan-header h3 {
-  font-size: 1.8rem;
-  margin-bottom: 1rem;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
   color: #1e293b;
+  font-weight: 900;
 }
 
 .price {
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 0.3rem;
+  gap: 0.5rem;
 }
 
 .currency {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
   color: #64748b;
+  font-weight: 800;
 }
 
 .amount {
-  font-size: 3.5rem;
-  font-weight: 700;
+  font-size: 4rem;
+  font-weight: 900;
   color: #1e293b;
+  letter-spacing: -2px;
 }
 
 .period {
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: #64748b;
+  font-weight: 700;
 }
 
 .plan-features {
   list-style: none;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .plan-features li {
-  padding: 0.8rem 0;
+  padding: 1rem 0;
   color: #64748b;
-  font-size: 1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
 }
 
 .btn-plan {
   display: block;
   width: 100%;
-  padding: 1rem;
-  background: #6366f1;
+  padding: 1.2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   text-align: center;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
+  border-radius: 15px;
+  font-size: 1.1rem;
+  font-weight: 800;
   cursor: pointer;
   text-decoration: none;
   transition: all 0.3s;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
 }
 
 .btn-plan:hover {
-  background: #4f46e5;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
 }
 
 /* Contact Section */
 .contact-section {
-  padding: 80px 2rem;
+  padding: 100px 2rem;
   background: linear-gradient(135deg, #f5f7fa 0%, #e8eef5 100%);
 }
 
 .contact-content {
   display: grid;
   grid-template-columns: 1fr 1.5fr;
-  gap: 3rem;
-  margin-top: 3rem;
+  gap: 4rem;
+  margin-top: 4rem;
 }
 
 .contact-info {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 2rem;
 }
 
 .contact-card {
   background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+  border: 2px solid #e2e8f0;
+  transition: transform 0.3s;
+}
+
+.contact-card:hover {
+  transform: translateY(-5px);
 }
 
 .contact-icon {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
+  font-size: 3rem;
+  margin-bottom: 1.5rem;
 }
 
 .contact-card h3 {
-  font-size: 1.3rem;
-  margin-bottom: 0.8rem;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
   color: #1e293b;
+  font-weight: 800;
 }
 
 .contact-card p {
   color: #64748b;
-  line-height: 1.6;
+  line-height: 1.7;
+  font-weight: 600;
 }
 
 .contact-form {
   background: white;
-  padding: 2.5rem;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  padding: 3rem;
+  border-radius: 25px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e2e8f0;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .form-group input,
 .form-group textarea {
   width: 100%;
-  padding: 1rem;
+  padding: 1.2rem 1.5rem;
   border: 2px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 12px;
+  font-size: 1.05rem;
   font-family: inherit;
-  transition: border-color 0.3s;
+  transition: all 0.3s;
+  font-weight: 600;
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
   outline: none;
-  border-color: #6366f1;
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
 }
 
 .btn-submit {
   width: 100%;
-  padding: 1rem;
-  background: #6366f1;
+  padding: 1.2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
+  border-radius: 15px;
+  font-size: 1.1rem;
+  font-weight: 800;
   cursor: pointer;
   transition: all 0.3s;
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
 }
 
 .btn-submit:hover {
-  background: #4f46e5;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.6);
 }
 
 @media (max-width: 768px) {
@@ -341,4 +392,205 @@
     grid-template-columns: 1fr;
     gap: 2rem;
   }
+
+  .section-title {
+    font-size: 2rem;
+  }
+
+  .about-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ========================================
+   COMPLETE DARK MODE - ALL SECTIONS
+   🌙 Dark Theme for Entire Homepage
+   ======================================== */
+
+/* Features Section */
+body[data-theme="dark"] .features-section {
+  background: #0f172a;
+}
+
+body[data-theme="dark"] .section-title {
+  color: #f1f5f9;
+}
+
+body[data-theme="dark"] .section-subtitle {
+  color: #94a3b8;
+}
+
+body[data-theme="dark"] .feature-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body[data-theme="dark"] .feature-card:hover {
+  border-color: #667eea;
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+}
+
+body[data-theme="dark"] .feature-card h3 {
+  color: #f1f5f9;
+}
+
+body[data-theme="dark"] .feature-card p {
+  color: #94a3b8;
+}
+
+/* About Section Dark Mode */
+body[data-theme="dark"] .about-section {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+body[data-theme="dark"] .about-description {
+  color: #94a3b8;
+}
+
+body[data-theme="dark"] .about-card {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+body[data-theme="dark"] .about-card h3 {
+  color: #f1f5f9;
+}
+
+body[data-theme="dark"] .about-list li {
+  color: #94a3b8;
+  border-bottom-color: #334155;
+}
+
+body[data-theme="dark"] .about-list li:hover {
+  color: #8b9cf6;
+}
+
+body[data-theme="dark"] .stat-text {
+  color: #94a3b8;
+}
+
+/* Stat Number - Keep gradient */
+body[data-theme="dark"] .stat-number {
+  background: linear-gradient(135deg, #8b9cf6 0%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Pricing Section Dark Mode */
+body[data-theme="dark"] .pricing-section {
+  background: #0f172a;
+}
+
+body[data-theme="dark"] .pricing-card {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+body[data-theme="dark"] .pricing-card:hover {
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.5);
+}
+
+body[data-theme="dark"] .pricing-card.popular {
+  border-color: #667eea;
+  box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+}
+
+body[data-theme="dark"] .plan-header {
+  border-bottom-color: #334155;
+}
+
+body[data-theme="dark"] .plan-header h3 {
+  color: #f1f5f9;
+}
+
+body[data-theme="dark"] .currency,
+body[data-theme="dark"] .period {
+  color: #94a3b8;
+}
+
+body[data-theme="dark"] .amount {
+  color: #f1f5f9;
+}
+
+body[data-theme="dark"] .plan-features li {
+  color: #94a3b8;
+}
+
+/* Contact Section Dark Mode */
+body[data-theme="dark"] .contact-section {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+body[data-theme="dark"] .contact-card {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+body[data-theme="dark"] .contact-card h3 {
+  color: #f1f5f9;
+}
+
+body[data-theme="dark"] .contact-card p {
+  color: #94a3b8;
+}
+
+body[data-theme="dark"] .contact-form {
+  background: #0f172a;
+  border-color: #334155;
+}
+
+body[data-theme="dark"] .form-group input,
+body[data-theme="dark"] .form-group textarea {
+  background: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+body[data-theme="dark"] .form-group input::placeholder,
+body[data-theme="dark"] .form-group textarea::placeholder {
+  color: #64748b;
+}
+
+body[data-theme="dark"] .form-group input:focus,
+body[data-theme="dark"] .form-group textarea:focus {
+  border-color: #667eea;
+  background: #0f172a;
+}
+
+/* Button in forms stays gradient */
+body[data-theme="dark"] .btn-submit {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+/* Footer Dark Mode */
+body[data-theme="dark"] .footer {
+  background: #0f172a;
+  border-top-color: #334155;
+}
+
+body[data-theme="dark"] .footer-text {
+  color: #94a3b8;
+}
+
+body[data-theme="dark"] .footer-link {
+  color: #8b9cf6;
+}
+
+body[data-theme="dark"] .footer-link:hover {
+  color: #667eea;
+}
+
+/* =====================================
+   🔥 FOOTER BRAND NAME FIX - DARK MODE
+   ✅ ALWAYS VISIBLE
+   ====================================== */
+body[data-theme="dark"] .footer-brand h3 {
+  color: #f1f5f9 !important;
+  font-weight: 900 !important;
+  background: none !important;
+  background-image: none !important;
+  -webkit-background-clip: initial !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+  opacity: 1 !important;
 }
