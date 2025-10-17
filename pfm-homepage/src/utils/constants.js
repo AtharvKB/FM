@@ -3,7 +3,9 @@
 /**
  * API Base URL
  */
-export const API_URL = 'http://localhost:5000/api';
+// 🔥 CORRECT - Use environment variable
+export const API_URL = import.meta.env.VITE_API_URL || 'https://fm-rfxm.onrender.com/api';
+
 
 /**
  * Transaction types
