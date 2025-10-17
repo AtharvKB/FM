@@ -1,9 +1,9 @@
 import axios from 'axios';
 
-// Base URL for your backend - uses environment variable or falls back to localhost
+// 🔥 YOUR WORKING RENDER BACKEND URL
 const API_URL = import.meta.env.VITE_API_URL || 'https://fm-rfxm.onrender.com/api';
 
-console.log('🔥 API URL:', API_URL); // For debugging
+console.log('🔥 Connected to API:', API_URL);
 
 // Create axios instance
 const api = axios.create({
@@ -11,7 +11,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 second timeout
+  timeout: 30000, // 30 seconds for cold starts
 });
 
 // Add token to requests automatically
@@ -28,21 +28,18 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor for better error handling
+// Response interceptor for error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle 401 Unauthorized
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
     }
     
-    // Log error for debugging
     console.error('❌ API Error:', {
       url: error.config?.url,
-      method: error.config?.method,
       status: error.response?.status,
       message: error.message,
     });
@@ -53,7 +50,6 @@ api.interceptors.response.use(
 
 // Auth API calls
 export const authAPI = {
-  // Register
   register: async (userData) => {
     try {
       const response = await api.post('/auth/register', userData);
@@ -68,7 +64,6 @@ export const authAPI = {
     }
   },
 
-  // Login
   login: async (credentials) => {
     try {
       const response = await api.post('/auth/login', credentials);
@@ -83,7 +78,6 @@ export const authAPI = {
     }
   },
 
-  // Get current user
   getMe: async () => {
     try {
       const response = await api.get('/auth/me');
@@ -94,7 +88,6 @@ export const authAPI = {
     }
   },
 
-  // Logout
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -103,7 +96,6 @@ export const authAPI = {
 
 // Transactions API calls
 export const transactionsAPI = {
-  // Get all transactions
   getAll: async () => {
     try {
       const response = await api.get('/transactions');
@@ -114,7 +106,6 @@ export const transactionsAPI = {
     }
   },
 
-  // Create transaction
   create: async (transactionData) => {
     try {
       const response = await api.post('/transactions', transactionData);
@@ -125,7 +116,6 @@ export const transactionsAPI = {
     }
   },
 
-  // Update transaction
   update: async (id, transactionData) => {
     try {
       const response = await api.put(`/transactions/${id}`, transactionData);
@@ -136,60 +126,12 @@ export const transactionsAPI = {
     }
   },
 
-  // Delete transaction
   delete: async (id) => {
     try {
       const response = await api.delete(`/transactions/${id}`);
       return response.data;
     } catch (error) {
       console.error('Delete transaction error:', error);
-      throw error;
-    }
-  },
-};
-
-// Budget API calls (if you have them)
-export const budgetAPI = {
-  // Get all budgets
-  getAll: async () => {
-    try {
-      const response = await api.get('/budgets');
-      return response.data;
-    } catch (error) {
-      console.error('Get budgets error:', error);
-      throw error;
-    }
-  },
-
-  // Create budget
-  create: async (budgetData) => {
-    try {
-      const response = await api.post('/budgets', budgetData);
-      return response.data;
-    } catch (error) {
-      console.error('Create budget error:', error);
-      throw error;
-    }
-  },
-
-  // Update budget
-  update: async (id, budgetData) => {
-    try {
-      const response = await api.put(`/budgets/${id}`, budgetData);
-      return response.data;
-    } catch (error) {
-      console.error('Update budget error:', error);
-      throw error;
-    }
-  },
-
-  // Delete budget
-  delete: async (id) => {
-    try {
-      const response = await api.delete(`/budgets/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error('Delete budget error:', error);
       throw error;
     }
   },
