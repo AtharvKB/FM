@@ -11,7 +11,7 @@ import BuyPremiumPage from "./pages/BuyPremiumPage";
 import PremiumStatusPage from "./pages/PremiumStatusPage";
 import ErrorBoundary from './components/common/ErrorBoundary';
 import NetworkStatus from './components/common/NetworkStatus';
-import { API_URL } from '../utils/constants';
+import { API_URL } from './utils/constants';
 import './styles/global.css';
 import './styles/auth.css';
 
