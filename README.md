@@ -40,4 +40,4 @@
 
 **⭐ If you found this useful, give it a star!**
 
-Made with by Atharv Kiran Bhoir
+Made by Atharv Kiran Bhoir
