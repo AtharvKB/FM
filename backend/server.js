@@ -74,7 +74,7 @@ app.use(cors({
       callback(null, true);
     } else {
       console.warn('⚠️ CORS blocked:', origin);
-      callback(null, true); // 🔥 ALLOW ALL for now to avoid CORS errors
+      callback(null, true); // Allow all for now
     }
   },
   credentials: true,
@@ -83,7 +83,7 @@ app.use(cors({
   exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
 
-app.options('*', cors());
+// ❌ REMOVED: app.options('*', cors()); - This line was causing the error!
 
 // Body Parsers
 app.use(express.json({ limit: '10mb' }));
