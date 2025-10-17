@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
 
+// ✅ ADD THIS IMPORT AT THE TOP
+const API_URL = 'https://fm-rfxm.onrender.com/api';
+
 const BuyPremiumPage = ({ userEmail, onBack, onPaymentSuccess }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [checkingStatus, setCheckingStatus] = useState(true);
@@ -12,7 +15,8 @@ const BuyPremiumPage = ({ userEmail, onBack, onPaymentSuccess }) => {
 
   const checkPremiumStatus = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/payment/premium-status/${userEmail}`);
+      // ✅ FIXED - Line 1
+      const response = await fetch(`${API_URL}/payment/premium-status/${userEmail}`);
       const data = await response.json();
       
       if (data.success && data.isPremium) {
@@ -50,7 +54,8 @@ const BuyPremiumPage = ({ userEmail, onBack, onPaymentSuccess }) => {
 
       console.log('🔄 Creating order...');
 
-      const orderResponse = await fetch('http://localhost:5000/api/payment/create-order', {
+      // ✅ FIXED - Line 2
+      const orderResponse = await fetch(`${API_URL}/payment/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: 352.82, email: userEmail })
@@ -76,7 +81,8 @@ const BuyPremiumPage = ({ userEmail, onBack, onPaymentSuccess }) => {
         handler: async function (response) {
           console.log('✅ Payment successful:', response);
 
-          const verifyResponse = await fetch('http://localhost:5000/api/payment/verify-payment', {
+          // ✅ FIXED - Line 3
+          const verifyResponse = await fetch(`${API_URL}/payment/verify-payment`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

@@ -108,7 +108,7 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
   const fetchUsageInfo = async () => {
     if (!isPremium) {
       try {
-        const response = await fetch(`http://localhost:5000/api/usage/${userEmail}`);
+        const response = await fetch(`${API_URL}/usage/${userEmail}`);
         const data = await response.json();
         if (data.success) {
           setUsageInfo(data.usageInfo);

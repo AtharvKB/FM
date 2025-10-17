@@ -11,6 +11,7 @@ import BuyPremiumPage from "./pages/BuyPremiumPage";
 import PremiumStatusPage from "./pages/PremiumStatusPage";
 import ErrorBoundary from './components/common/ErrorBoundary';
 import NetworkStatus from './components/common/NetworkStatus';
+import { API_URL } from '../utils/constants';
 import './styles/global.css';
 import './styles/auth.css';
 
@@ -33,7 +34,7 @@ function App() {
 
   const checkPremiumStatus = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/payment/premium-status/${loggedInUser}`);
+      const response = await fetch(`${API_URL}/payment/premium-status/${loggedInUser}`);
       const data = await response.json();
       
       if (data.success) {
