@@ -4,7 +4,7 @@
 
 ## 🚀 Live Demo
 
-**👉 [Try Live Demo](fm-gd7x.vercel.app)**
+**👉 [Try Live Demo][(fm-gd7x.vercel.app)](https://fm-gd7x.vercel.app/)**
 
 ## ✨ Features
 
