@@ -59,16 +59,20 @@ const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000',
+  'https://fm-rfxm.onrender.com', // Your Render backend (for health checks)
 ];
 
+// Add Vercel frontend URL if provided
 if (process.env.FRONTEND_URL) {
   allowedOrigins.push(process.env.FRONTEND_URL);
 }
 
 app.use(cors({
   origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, Postman, curl)
     if (!origin) return callback(null, true);
     
+    // Allow if origin is in allowedOrigins OR ends with .vercel.app
     if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
@@ -219,6 +223,7 @@ app.get('/', (req, res) => {
     status: 'active',
     version: '1.0.0',
     timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
     security: {
       rateLimit: 'enabled',
       helmet: 'enabled',
@@ -258,7 +263,8 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected'
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    memory: process.memoryUsage()
   });
 });
 
@@ -270,7 +276,7 @@ app.get('/health', (req, res) => {
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: 'Route not found'
+    message: `Route not found: ${req.method} ${req.path}`
   });
 });
 
@@ -300,8 +306,8 @@ process.on('SIGTERM', () => {
 // START SERVER
 // ========================================
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 10000; // 🔥 Changed default to 10000 for Render
+app.listen(PORT, '0.0.0.0', () => { // 🔥 Bind to 0.0.0.0 for Render
   console.log(`\n🚀 Server running on port ${PORT}`);
   console.log(`📍 Server URL: http://localhost:${PORT}`);
   console.log(`🔒 Environment: ${process.env.NODE_ENV || 'development'}`);
