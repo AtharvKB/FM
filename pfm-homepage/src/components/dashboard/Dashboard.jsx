@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './Dashboard.css';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { TYPE_ICONS, CATEGORY_ICONS, CATEGORY_LABELS } from '../../utils/constants';
+import { TYPE_ICONS, CATEGORY_ICONS, CATEGORY_LABELS,API_URL } from '../../utils/constants';
 import { transactionsAPI } from '../../services/api';
 import BudgetAlerts from './BudgetAlerts';
 
