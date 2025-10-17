@@ -54,12 +54,12 @@ const transactionLimiter = rateLimit({
 // STANDARD MIDDLEWARE
 // ========================================
 
-// CORS Configuration
+// CORS Configuration - FIXED FOR PRODUCTION
 const allowedOrigins = [
   'http://localhost:5173',
   'http://localhost:5174',
   'http://localhost:3000',
-  'https://fm-rfxm.onrender.com', // Your Render backend (for health checks)
+  'https://fm-rfxm.onrender.com',
 ];
 
 // Add Vercel frontend URL if provided
@@ -69,11 +69,12 @@ if (process.env.FRONTEND_URL) {
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, Postman, curl)
+    // Allow requests with no origin (mobile apps, Postman, curl, server-to-server)
     if (!origin) return callback(null, true);
     
-    // Allow if origin is in allowedOrigins OR ends with .vercel.app
-    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+    // 🔥 Allow ALL .vercel.app domains OR whitelisted origins
+    if (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
+      console.log('✅ CORS allowed:', origin);
       callback(null, true);
     } else {
       console.warn('⚠️ CORS blocked:', origin);
@@ -81,9 +82,13 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 }));
+
+// Handle preflight requests explicitly
+app.options('*', cors());
 
 // Body Parsers
 app.use(express.json({ limit: '10mb' }));
@@ -227,7 +232,7 @@ app.get('/', (req, res) => {
     security: {
       rateLimit: 'enabled',
       helmet: 'enabled',
-      cors: 'enabled'
+      cors: 'enabled - ALL .vercel.app domains allowed'
     },
     endpoints: {
       auth: {
@@ -306,15 +311,15 @@ process.on('SIGTERM', () => {
 // START SERVER
 // ========================================
 
-const PORT = process.env.PORT || 10000; // 🔥 Changed default to 10000 for Render
-app.listen(PORT, '0.0.0.0', () => { // 🔥 Bind to 0.0.0.0 for Render
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`\n🚀 Server running on port ${PORT}`);
   console.log(`📍 Server URL: http://localhost:${PORT}`);
   console.log(`🔒 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log('\n✅ Security Features:');
   console.log('   🛡️  Helmet.js - Security Headers');
   console.log('   ⏱️  Rate Limiting - Enabled');
-  console.log('   🔐 CORS - Configured');
+  console.log('   🔐 CORS - Configured (ALL .vercel.app allowed)');
   console.log('   🛡️  Mongoose - Built-in NoSQL Protection');
   console.log('\n✅ Available endpoints:');
   console.log('\n   🔓 Public Routes:');
