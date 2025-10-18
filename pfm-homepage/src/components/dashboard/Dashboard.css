@@ -4,6 +4,7 @@
    ======================================== */
 
 /* ========== CSS VARIABLES ========== */
+
 :root {
   /* Light Theme */
   --bg-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -29,6 +30,7 @@
   --warning: #fbbf24;
   --info: #3b82f6;
 }
+
 /* ========================================
    DASHBOARD PAGE THEME - ISOLATED FIX
    ✅ Add this at the TOP after variables
@@ -214,12 +216,16 @@
 }
 
 /* ========== NAVIGATION - Solid (Fast) ========== */
+/* ===================================
+   NAVIGATION - Clean Version
+   =================================== */
+
 .dashboard-nav {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1.2rem 2.5rem;
-  background: rgba(255, 255, 255, 0.95); /* ✅ Solid instead of blur */
+  background: rgba(255, 255, 255, 0.95);
   box-shadow: var(--shadow);
   border-bottom: 1px solid var(--border-color);
   position: sticky;
@@ -236,11 +242,11 @@
   font-weight: 900;
   letter-spacing: -1px;
   margin: 0;
-  color: #1e293b;
+  color: #1a202c !important;
 }
 
-[data-theme="dark"] .nav-brand h2 {
-  color: #f1f5f9;
+.dashboard-page[data-theme="dark"] .nav-brand h2 {
+  color: #f1f5f9 !important;
 }
 
 .nav-actions {
@@ -248,6 +254,7 @@
   align-items: center;
   gap: 1.2rem;
 }
+
 
 /* Theme Toggle */
 .theme-toggle {
@@ -465,28 +472,44 @@
 }
 
 /* Empty State */
+/* Empty State - Light Mode Fix */
 .empty-state {
   text-align: center;
   padding: 5rem 2rem;
-  background: var(--bg-card);
+  background: #ffffff !important;
   border-radius: 30px;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   margin-bottom: 3rem;
-  border: 2px solid var(--border-color);
+  border: 2px solid #e2e8f0;
 }
 
 .empty-state h2 {
-  color: var(--text-primary);
+  color: #1a202c !important;
   margin-bottom: 1rem;
   font-size: 2.5rem;
   font-weight: 800;
 }
 
 .empty-state p {
-  color: var(--text-secondary);
+  color: #64748b !important;
   margin-bottom: 2rem;
   font-size: 1.2rem;
 }
+
+/* Dark Mode Only */
+.dashboard-page[data-theme="dark"] .empty-state {
+  background: #1e293b !important;
+  border-color: #334155;
+}
+
+.dashboard-page[data-theme="dark"] .empty-state h2 {
+  color: #f1f5f9 !important;
+}
+
+.dashboard-page[data-theme="dark"] .empty-state p {
+  color: #94a3b8 !important;
+}
+
 
 /* Balance Card - NO blur animations */
 .balance-card {
@@ -1878,23 +1901,26 @@
   margin-bottom: 2rem;
 }
 
-.report-table th,
-.report-table td {
+.report-table th, .report-table td {
   padding: 1rem;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
 }
 
 .report-table th {
-  background: var(--bg-secondary);
+  background: #f1f5f9;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #1e293b;
 }
 
 .report-table td {
   color: var(--text-primary);
 }
-
+/* Dark Mode */
+.dashboard-page[data-theme="dark"] .report-table th {
+  background: #334155;
+  color: #f1f5f9;
+}
 .report-table td.income {
   color: #10b981;
   font-weight: 600;

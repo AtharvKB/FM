@@ -44,26 +44,44 @@
 }
 
 /* Empty State */
+/* Empty State - Light Mode Fix */
 .empty-state {
   text-align: center;
-  padding: 4rem 2rem;
-  background: var(--bg-card);
-  border-radius: 20px;
-  box-shadow: var(--shadow);
-  margin-bottom: 2rem;
+  padding: 5rem 2rem;
+  background: #ffffff !important;
+  border-radius: 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin-bottom: 3rem;
+  border: 2px solid #e2e8f0;
 }
 
 .empty-state h2 {
-  color: var(--text-primary);
+  color: #1a202c !important;
   margin-bottom: 1rem;
-  font-size: 2rem;
+  font-size: 2.5rem;
+  font-weight: 800;
 }
 
 .empty-state p {
-  color: var(--text-secondary);
+  color: #64748b !important;
   margin-bottom: 2rem;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
 }
+
+/* Dark Mode Only */
+.dashboard-page[data-theme="dark"] .empty-state {
+  background: #1e293b !important;
+  border-color: #334155;
+}
+
+.dashboard-page[data-theme="dark"] .empty-state h2 {
+  color: #f1f5f9 !important;
+}
+
+.dashboard-page[data-theme="dark"] .empty-state p {
+  color: #94a3b8 !important;
+}
+
 
 /* Error Banner */
 .error-banner {

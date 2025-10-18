@@ -4,7 +4,22 @@
  * API Base URL
  */
 // 🔥 CORRECT - Use environment variable
-export const API_URL = import.meta.env.VITE_API_URL || 'https://fm-rfxm.onrender.com/api';
+// src/utils/constants.js
+
+// src/utils/constants.js (lines 9-13)
+
+const isDev = window.location.hostname === 'localhost' || 
+              window.location.hostname === '127.0.0.1' ||
+              window.location.hostname === '';
+
+export const API_URL = isDev
+  ? 'http://localhost:5000/api'
+  : 'https://fm-rfxm.onrender.com/api';
+
+console.log('🔥 API_URL:', API_URL); // Debug line
+
+
+
 
 
 /**

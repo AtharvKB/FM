@@ -572,10 +572,10 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
             justifyContent: 'space-between',
             alignItems: 'center'
           }}>
-            <span>
-              📊 Free Tier: {usageInfo.used}/{usageInfo.limit} transactions this month
-              ({usageInfo.remaining} remaining)
-            </span>
+            <span style={{ color: '#92400e' }}>
+      📊 Free Tier: {usageInfo.used}/{usageInfo.limit} transactions this month
+      ({usageInfo.remaining} remaining)
+    </span>
             <button 
               onClick={onBuyPremium}
               style={{
@@ -859,24 +859,27 @@ const Dashboard = ({ userEmail, isPremium, premiumEndDate, onBuyPremium, onLogou
         onDownloadPDF={() => showToast('PDF download coming soon!', 'success')}
       />
 
-      <ProfileModal
-        show={showProfileModal}
-        onClose={() => setShowProfileModal(false)}
-        userEmail={userEmail}
-        isPremium={isPremium}
-      />
+     <ProfileModal
+  show={showProfileModal}
+  onClose={() => setShowProfileModal(false)}
+  userEmail={userEmail}
+  isPremium={isPremium}
+  isDarkMode={isDarkMode}
+/>
 
-      <SettingsModal
-        show={showSettingsModal}
-        onClose={() => setShowSettingsModal(false)}
-        isDarkMode={isDarkMode}
-        toggleTheme={toggleTheme}
-      />
+<SettingsModal
+  show={showSettingsModal}
+  onClose={() => setShowSettingsModal(false)}
+  isDarkMode={isDarkMode}
+  toggleTheme={toggleTheme}
+/>
 
-      <HelpModal
-        show={showHelpModal}
-        onClose={() => setShowHelpModal(false)}
-      />
+<HelpModal
+  show={showHelpModal}
+  onClose={() => setShowHelpModal(false)}
+  isDarkMode={isDarkMode}
+/>
+
     </div>
   );
 };

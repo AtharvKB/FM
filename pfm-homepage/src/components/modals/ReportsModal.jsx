@@ -1,4 +1,6 @@
 import React from 'react';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import { formatCurrency } from '../../utils/formatters';
 import { CATEGORY_ICONS, CATEGORY_LABELS, CATEGORY_COLORS } from '../../utils/constants';
 
@@ -61,6 +63,145 @@ const ReportsModal = ({
     ? ((financialData.expenses / financialData.income) * 100).toFixed(1)
     : 0;
 
+  // PDF Download Function
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    
+    // Title
+    doc.setFontSize(24);
+    doc.setTextColor(102, 126, 234);
+    doc.text('Financial Report', 14, 20);
+    
+    // Date
+    doc.setFontSize(10);
+    doc.setTextColor(100, 116, 139);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
+    doc.setDrawColor(226, 232, 240);
+    doc.line(14, 30, 196, 30);
+
+    // Summary Section
+    doc.setFontSize(16);
+    doc.setTextColor(40);
+    doc.text('Financial Summary', 14, 40);
+    
+    autoTable(doc, {
+      startY: 45,
+      head: [['Metric', 'Amount', 'Details']],
+      body: [
+        ['Total Income', formatCurrency(financialData.income), ''],
+        ['Total Expenses', formatCurrency(financialData.expenses), `${expenseRate}% of income`],
+        ['Total Savings', formatCurrency(financialData.savings), `${savingsRate}% savings rate`],
+        ['Net Balance', formatCurrency(netBalance), netBalance >= 0 ? 'Positive' : 'Negative']
+      ],
+      theme: 'grid',
+      headStyles: { fillColor: [102, 126, 234], fontSize: 12 },
+      styles: { fontSize: 10 }
+    });
+
+    // Monthly Summary Table
+    const startY1 = doc.lastAutoTable.finalY + 15;
+    doc.setFontSize(16);
+    doc.text('Monthly Summary', 14, startY1);
+    
+    autoTable(doc, {
+      startY: startY1 + 5,
+      head: [['Month', 'Transactions', 'Income', 'Expenses', 'Savings', 'Net Balance']],
+      body: [[
+        new Date().toLocaleString('default', { month: 'long', year: 'numeric' }),
+        transactionsCount,
+        formatCurrency(financialData.income),
+        formatCurrency(financialData.expenses),
+        formatCurrency(financialData.savings),
+        formatCurrency(netBalance)
+      ]],
+      theme: 'grid',
+      headStyles: { fillColor: [102, 126, 234] }
+    });
+
+    // Category Breakdown
+    if (categoryBreakdown.length > 0) {
+      const startY2 = doc.lastAutoTable.finalY + 15;
+      doc.setFontSize(16);
+      doc.text('Expense Breakdown by Category', 14, startY2);
+      
+      autoTable(doc, {
+        startY: startY2 + 5,
+        head: [['Category', 'Amount', '% of Expenses']],
+        body: categoryBreakdown.map(cat => [
+          cat.label,
+          formatCurrency(cat.amount),
+          `${cat.percentage}%`
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: [102, 126, 234] }
+      });
+    }
+
+    // Key Insights
+    const startY3 = doc.lastAutoTable.finalY + 15;
+    doc.setFontSize(16);
+    doc.text('Key Insights', 14, startY3);
+    
+    doc.setFontSize(10);
+    doc.setTextColor(40);
+    let yPos = startY3 + 8;
+    
+    doc.text(`Savings Rate: ${savingsRate >= 20 ? 'Excellent' : 'Needs Improvement'} (${savingsRate}%)`, 14, yPos);
+    yPos += 7;
+    doc.text(`Expense Management: ${expenseRate <= 70 ? 'Good Control' : 'High Spending'} (${expenseRate}%)`, 14, yPos);
+    yPos += 7;
+    doc.text(`Transaction Activity: ${transactionsCount} transactions recorded this month`, 14, yPos);
+    
+    if (categoryBreakdown.length > 0) {
+      yPos += 7;
+      doc.text(`Top Category: ${categoryBreakdown[0].label} (${formatCurrency(categoryBreakdown[0].amount)})`, 14, yPos);
+    }
+
+    // Save PDF
+    doc.save(`financial-report-${new Date().toISOString().split('T')[0]}.pdf`);
+  };
+
+  // CSV Export Function
+  const handleExportCSV = () => {
+    const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
+    
+    let csvContent = "Financial Report\n";
+    csvContent += `Generated: ${new Date().toLocaleString()}\n\n`;
+    
+    // Summary
+    csvContent += "Financial Summary\n";
+    csvContent += "Metric,Amount,Details\n";
+    csvContent += `Total Income,${financialData.income},\n`;
+    csvContent += `Total Expenses,${financialData.expenses},${expenseRate}% of income\n`;
+    csvContent += `Total Savings,${financialData.savings},${savingsRate}% savings rate\n`;
+    csvContent += `Net Balance,${netBalance},${netBalance >= 0 ? 'Positive' : 'Negative'}\n\n`;
+    
+    // Monthly Summary
+    csvContent += "Monthly Summary\n";
+    csvContent += "Month,Transactions,Income,Expenses,Savings,Net Balance\n";
+    csvContent += `${currentMonth},${transactionsCount},${financialData.income},${financialData.expenses},${financialData.savings},${netBalance}\n\n`;
+    
+    // Category Breakdown
+    if (categoryBreakdown.length > 0) {
+      csvContent += "Expense Breakdown by Category\n";
+      csvContent += "Category,Amount,% of Expenses\n";
+      categoryBreakdown.forEach(cat => {
+        csvContent += `${cat.label},${cat.amount},${cat.percentage}%\n`;
+      });
+    }
+    
+    // Create and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `financial-report-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div 
@@ -73,7 +214,7 @@ const ReportsModal = ({
       >
         <div className="modal-header" style={{ color: themeStyles.textPrimary }}>
           <h2 style={{ color: themeStyles.textPrimary }}>📈 Financial Reports</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
+          <button className="close-btn" onClick={onClose} style={{ color: themeStyles.textPrimary }}>×</button>
         </div>
         
         <div className="reports-content">
@@ -266,12 +407,12 @@ const ReportsModal = ({
                 </div>
               </div>
 
-              {/* Download Button */}
+              {/* Download Buttons */}
               <div className="report-actions">
-                <button className="download-btn primary" onClick={onDownloadPDF}>
+                <button className="download-btn primary" onClick={handleDownloadPDF}>
                   📥 Download Full Report (PDF)
                 </button>
-                <button className="download-btn secondary" onClick={() => alert('CSV export coming soon!')}>
+                <button className="download-btn secondary" onClick={handleExportCSV}>
                   📊 Export as CSV
                 </button>
               </div>

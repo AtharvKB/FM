@@ -1,7 +1,7 @@
 import axios from 'axios';
+import { API_URL } from '../utils/constants';
 
 // 🔥 YOUR WORKING RENDER BACKEND URL
-const API_URL = import.meta.env.VITE_API_URL || 'https://fm-rfxm.onrender.com/api';
 
 console.log('🔥 Connected to API:', API_URL);
 

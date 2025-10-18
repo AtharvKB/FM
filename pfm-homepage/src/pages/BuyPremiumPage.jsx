@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { API_URL } from '../utils/constants';
+
 
 // ✅ ADD THIS IMPORT AT THE TOP
-const API_URL = 'https://fm-rfxm.onrender.com/api';
 
 const BuyPremiumPage = ({ userEmail, onBack, onPaymentSuccess }) => {
   const [isProcessing, setIsProcessing] = useState(false);
